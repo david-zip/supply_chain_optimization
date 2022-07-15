@@ -60,7 +60,7 @@ def test_run(*args):
         SA_params_ = {}
         SA_params_['bounds']    = [-5, 5]
         SA_params_['temp']      = [1.0, 0.1]
-        SA_params_['maxiter']   = 100000
+        SA_params_['maxiter']   = 1000
 
         optimizer = Simulated_Annealing(model=policy_net, env=SC_model, **SA_params_)
 
@@ -69,7 +69,7 @@ def test_run(*args):
         print('training done!')
 
         plt.plot(R_list)
-        plt.savefig('testfigSA.png')
+        plt.savefig('plots/test/testfigSA.png')
     
     if 'pso' in args:
         ### INITIALISE ENVIRONMENT ###
@@ -123,7 +123,7 @@ def test_run(*args):
         print('training done!')
 
         plt.plot(R_list)
-        plt.savefig('testfigPSO.png')
+        plt.savefig('plots/test/testfigPSO.png')
     
     if 'abc' in args:
         ### INITIALISE ENVIRONMENT ###
@@ -175,7 +175,7 @@ def test_run(*args):
         print('training done!')
 
         plt.plot(R_list)
-        plt.savefig('testfigABC.png')
+        plt.savefig('plots/test/testfigABC.png')
 
     if 'reinforce' in args:
         ### INITIALISE ENVIRONMENT ###
@@ -250,7 +250,7 @@ def test_run(*args):
 
         # plot data
         plt.plot(total_rewards)
-        plt.savefig("testfig.png")
+        plt.savefig("plots/test/testfigREINFORCE.png")
 
 if __name__=="__main__":
     keynames = ['sa']
