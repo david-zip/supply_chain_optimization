@@ -179,7 +179,7 @@ plt.xlabel("Number of algorithm iterations")
 plt.ylabel("Total reward")
 plt.legend(loc="upper right")
 
-plt.savefig(f'plots/test/simulated_annealing.png')
+plt.savefig(f'plots/training_plots/simulated_annealing.png')
 
 # particle swarm optimization
 fig = plt.figure()
@@ -191,7 +191,7 @@ plt.xlabel("Number of algorithm iterations")
 plt.ylabel("Total reward")
 plt.legend(loc="upper right")
 
-plt.savefig(f'plots/test/particle_swarm_opimization.png')
+plt.savefig(f'plots/training_plots/particle_swarm_opimization.png')
 
 # artificial bee colony
 fig = plt.figure()
@@ -203,6 +203,6 @@ plt.xlabel("Number of algorithm iterations")
 plt.ylabel("Total reward")
 plt.legend(loc="upper right")
 
-plt.savefig(f'plots/test/articial_bee_colony.png')
+plt.savefig(f'plots/training_plots/articial_bee_colony.png')
 
 print("All plots complete")
