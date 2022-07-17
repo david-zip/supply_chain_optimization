@@ -104,6 +104,19 @@ class Artificial_Bee_Colony():
             param_diff = torch.sub(self.bee_parameters[i][key], random_parameters[key])
             new_params[key] = torch.add(self.bee_parameters[i][key], torch.mul(param_diff, random[key]))
         
+            # check if bound constraints have been breached
+            for tensor in new_params[key]:
+                tensor = tensor.unsqueeze(-1)
+                for param in tensor:
+                        
+                    # check if parameter is too large
+                    if param > self.ub:
+                        param = torch.tensor(self.ub, dtype=torch.float)
+                        
+                    # check if parameter is too small
+                    if param < self.lb:
+                        param = torch.tensor(self.lb, dtype=torch.float)
+
         # determine new reward
         self.model.load_state_dict(new_params)
         new_reward = function(self.env, SC_run_params, self.model)
@@ -134,6 +147,19 @@ class Artificial_Bee_Colony():
             param_diff = torch.sub(self.bee_parameters[i][key], neighbour_params[key])
             new_params[key] = torch.add(self.bee_parameters[i][key], torch.mul(param_diff, random[key]))
         
+            # check if bound constraints have been breached
+            for tensor in new_params[key]:
+                tensor = tensor.unsqueeze(-1)
+                for param in tensor:
+                        
+                    # check if parameter is too large
+                    if param > self.ub:
+                        param = torch.tensor(self.ub, dtype=torch.float)
+                        
+                    # check if parameter is too small
+                    if param < self.lb:
+                        param = torch.tensor(self.lb, dtype=torch.float)
+
         # determine new reward
         self.model.load_state_dict(new_params)
         new_reward = function(self.env, SC_run_params, self.model)

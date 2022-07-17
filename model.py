@@ -25,14 +25,14 @@ class Net(nn.Module):
     self.hidden1 = nn.Linear(self.input_size, self.hs1 )
     self.hidden2 = nn.Linear(self.hs1, self.hs2)
     self.hidden3 = nn.Linear(self.hs2, self.hs3)
-    self.output = nn.Linear(self.hs3, self.output_sz)
+    self.output  = nn.Linear(self.hs3, self.output_sz)
 
   def forward(self, x):
     x           = torch.tensor(x.view(1,1,-1)).float()
     y           = F.leaky_relu(self.hidden1(x), 0.1)
     y           = F.leaky_relu(self.hidden2(y), 0.1)
-    y           = F.leaky_relu(self.hidden3(y))                # range (0,6)
-    y           = F.relu6(self.output(y))
+    y           = F.leaky_relu(self.hidden3(y))            
+    y           = F.relu6(self.output(y))                 # range (0,6)
     y           = y.detach().numpy()
 
     return np.around(y)                                   # notice the integer rounding

@@ -57,14 +57,14 @@ class Particle_Swarm_Optimization():
 
         # initialise global best
         self.gbest_parameters   = copy.deepcopy(self.params)
-        self.gbest_reward       = -1e8
+        self.gbest_reward       = 0
         self.gbest_reward_list  = []
 
     def _initialize(self, function, SC_run_params):
         """
         Initialize random starting positions and velocities
         """
-        for i in range(len(self.population)):
+        for i in range(self.population):
     
             velocity = {}
             for key, value in self.params.items():
@@ -82,26 +82,27 @@ class Particle_Swarm_Optimization():
             total_reward = function(self.env, SC_run_params, self.model)
             self.particle_rewards.append(total_reward)
 
-            # initialize weight parameters
-            self.w      = self.w        # velocity weight
-            self.w0     = self.w_0      # initial weight value
-            self.lbda   = self.lbda0    # weight decay exponent
+        # initialize weight parameters
+        self.w      = self.w        # velocity weight
+        self.w0     = self.w_0      # initial weight value
+        self.lbda   = self.lbda0    # weight decay exponent
 
         # initialise personal best parameters and reward
-        for i in range(len(self.population)):
+        for i in range(self.population):
             self.pbest_parameters.append(copy.deepcopy(self.particle_parameters[i]))
             self.pbest_rewards.append(self.particle_rewards[i])
 
         # initialize global best
         self.gbest_reward       = max(self.particle_rewards)
         self.gbest_parameters   = copy.deepcopy(self.particle_parameters[self.particle_rewards.index(self.gbest_reward)])
+        
 
     def _find_best(self):
         """
         Determine personal and global best
         """
         # determine personal best
-        for i in range(len(self.population)):
+        for i in range(self.population):
             if self.particle_rewards[i] > self.pbest_rewards[i]:
                 # replace previous personal best
                 self.pbest_parameters[i]    = copy.deepcopy(self.particle_parameters[i])
@@ -118,7 +119,7 @@ class Particle_Swarm_Optimization():
         """
         Update particle parameters and velocity
         """
-        for i in range(len(self.population)):
+        for i in range(self.population):
             # look at every dictionary of parameters
             # sort into self.params
 
@@ -127,8 +128,8 @@ class Particle_Swarm_Optimization():
                 # look at the keys and values of self.params
 
                 # generate random values in the range (-1,1) in an tensor 
-                r1 = torch.rand(value.shape)
-                r2 = torch.rand(value.shape)
+                r1 = (-1 - 1) * torch.rand(value.shape) + 1
+                r2 = (-1 - 1) * torch.rand(value.shape) + 1
 
                 # influence part of update function
                 pbest_pt = self.c1 * torch.mul(r1, (torch.sub(self.pbest_parameters[i][key], self.particle_parameters[i][key])))
@@ -136,7 +137,20 @@ class Particle_Swarm_Optimization():
                 
                 self.particle_velocities[i][key]  = torch.add(torch.add(pbest_pt, gbest_pt), self.particle_velocities[i][key], alpha=self.w)
                 self.particle_parameters[i][key]  = torch.add(self.particle_parameters[i][key], self.particle_velocities[i][key])
-        
+
+                # check if bound constraints have been breached
+                for tensor in value:
+                    tensor = tensor.unsqueeze(-1)
+                    for param in tensor:
+                        
+                        # check if parameter is too large
+                        if param > self.ub:
+                            param = torch.tensor(self.ub, dtype=torch.float)
+                        
+                        # check if parameter is too small
+                        if param < self.lb:
+                            param = torch.tensor(self.lb, dtype=torch.float)
+                            
             # Calculate particle fitness
             self.model.load_state_dict(self.particle_parameters[i])
             new_reward = function(self.env, SC_run_params, self.model)

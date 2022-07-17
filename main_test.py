@@ -68,6 +68,7 @@ def test_run(*args):
 
         print('training done!')
 
+        plt.figure()
         plt.plot(R_list)
         plt.savefig('plots/test/testfigSA.png')
     
@@ -111,17 +112,19 @@ def test_run(*args):
         # define hyperparameters
         PSO_params_ = {}
         PSO_params_['bounds']        = [-5, 5]
-        PSO_params_['weights']       = [0.2, 0.2, 1.0]
-        PSO_params_['lambda']        = 1.0
-        PSO_params_['population']    = [0.2, 0.2, 1.0]
-        PSO_params_['maxiter']       = 5000
+        PSO_params_['weights']       = [0.5, 0.5, 1.0]
+        PSO_params_['lambda']        = 0.99
+        PSO_params_['population']    = 10
+        PSO_params_['maxiter']       = 1000
 
         optimizer = Particle_Swarm_Optimization(model=policy_net, env=SC_model, **PSO_params_)
 
         best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_)
 
+        
         print('training done!')
-
+    
+        plt.figure()
         plt.plot(R_list)
         plt.savefig('plots/test/testfigPSO.png')
     
@@ -164,7 +167,7 @@ def test_run(*args):
         ### INITIALISE ALGORITHM ###
         # define hyperparameters
         ABC_params_ = {}
-        ABC_params_['bounds']        = [-5, 5]
+        ABC_params_['bounds']        = [-5.0, 5.0]
         ABC_params_['population']    = 50
         ABC_params_['maxiter']       = 50
 
@@ -174,6 +177,7 @@ def test_run(*args):
 
         print('training done!')
 
+        plt.figure()
         plt.plot(R_list)
         plt.savefig('plots/test/testfigABC.png')
 
@@ -249,10 +253,18 @@ def test_run(*args):
         """
 
         # plot data
+        plt.figure()
         plt.plot(total_rewards)
         plt.savefig("plots/test/testfigREINFORCE.png")
 
 if __name__=="__main__":
-    keynames = ['sa']
+    """
+    Options:
+    - 'sa'
+    - 'pso'
+    - 'abc'
+    - 'reinforce'
+    """
+    keynames = ['abc', 'reinforce']
     
     test_run(*keynames)
