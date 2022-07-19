@@ -1,10 +1,11 @@
 """
 Particle swarm optimization for neural net optimization
 """
-import time
 import copy
 import torch
 import numpy as np
+
+from functions.timer import timeit
 
 class Particle_Swarm_Optimization():
 
@@ -23,8 +24,8 @@ class Particle_Swarm_Optimization():
         - kwargs['maxiter']     =   1000        # maximum number of iterations
         """
         # unpack the arguments
-        self.model      = model                     # neural network
-        self.env        = env                       # environment 
+        self.model      = model                 # neural network
+        self.env        = env                   # environment 
         self.args       = kwargs
 
         # store model parameters
@@ -95,7 +96,6 @@ class Particle_Swarm_Optimization():
         # initialize global best
         self.gbest_reward       = max(self.particle_rewards)
         self.gbest_parameters   = copy.deepcopy(self.particle_parameters[self.particle_rewards.index(self.gbest_reward)])
-        
 
     def _find_best(self):
         """
@@ -136,21 +136,11 @@ class Particle_Swarm_Optimization():
                 gbest_pt = self.c2 * torch.mul(r2, (torch.sub(self.gbest_parameters[key], self.particle_parameters[i][key])))
                 
                 self.particle_velocities[i][key]  = torch.add(torch.add(pbest_pt, gbest_pt), self.particle_velocities[i][key], alpha=self.w)
-                self.particle_parameters[i][key]  = torch.add(self.particle_parameters[i][key], self.particle_velocities[i][key])
+                self.particle_parameters[i][key]  = copy.deepcopy(torch.add(self.particle_parameters[i][key], self.particle_velocities[i][key]))
 
-                # check if bound constraints have been breached
-                for tensor in value:
-                    tensor = tensor.unsqueeze(-1)
-                    for param in tensor:
-                        
-                        # check if parameter is too large
-                        if param > self.ub:
-                            param = torch.tensor(self.ub, dtype=torch.float)
-                        
-                        # check if parameter is too small
-                        if param < self.lb:
-                            param = torch.tensor(self.lb, dtype=torch.float)
-                            
+                # check if bound constraints have been breached and replace
+                self.particle_parameters[i][key] = torch.clamp(self.particle_parameters[i][key], min=self.lb, max=self.ub)
+                
             # Calculate particle fitness
             self.model.load_state_dict(self.particle_parameters[i])
             new_reward = function(self.env, SC_run_params, self.model)
@@ -162,14 +152,14 @@ class Particle_Swarm_Optimization():
         """
         self.w = self.w0 * np.exp(-self.lbda*niter)
 
-
-    def algorithm(self, function: any, SC_run_params: dict, print_every: int = 0):
+    @timeit
+    def algorithm(self, function: any, SC_run_params: dict, iter_debug: bool = True):
         """
         Particle swarm optimization algorithm
 
         - function      =   J_supply_chain function (ssa verion)
         - SC_run_params =   J_supply_chain run parameters
-        - print_every   =   print best reward every n iterations (default = 0) (IMPLEMENT LATER)
+        - iter_debug    =   if true, prints ever 100 iterations
         """
         # initialize solutions
         self._initialize(function, SC_run_params)
@@ -179,7 +169,6 @@ class Particle_Swarm_Optimization():
 
         # start algorithm
         niter = 0
-        time_start = time.time()
         while niter < self.maxiter:
             self._weight_decay(niter)
             self._update(function, SC_run_params)
@@ -190,9 +179,9 @@ class Particle_Swarm_Optimization():
 
             # Iteration counter
             niter += 1
-            if niter % 100 == 0:
-                print(f'{niter}')
-        time_end = time.time()
+            if iter_debug == True:
+                if niter % 100 == 0:
+                    print(f'{niter}')
         
         return self.gbest_parameters, self.gbest_reward, self.gbest_reward_list
 

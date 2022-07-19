@@ -13,7 +13,7 @@ def reinforce(policy_net, rewards, orders, GAMMA, LEARNING_RATE):
     orders = np.array(orders)
 
     # convert from numpy to tensor
-    rewards = torch.tensor(rewards)
+    rewards = torch.tensor(rewards, requires_grad=True)
     orders = torch.tensor(orders, requires_grad=True)
 
     rewards = torch.unsqueeze(rewards, 1)
@@ -27,7 +27,7 @@ def reinforce(policy_net, rewards, orders, GAMMA, LEARNING_RATE):
     # calculated log probability
     logprobs = []
     for order in orders:
-        logprobs.append(torch.log(order))
+        logprobs.append(torch.log_softmax(order, dim=-1))
     
     # calculate policy loss
     loss = []
@@ -38,5 +38,4 @@ def reinforce(policy_net, rewards, orders, GAMMA, LEARNING_RATE):
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
-
     

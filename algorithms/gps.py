@@ -1,10 +1,10 @@
-#################################
-# Generalized policy search 
-#################################
+"""
+Generalized policy search for neural net optimization
+"""
 import torch
 import copy
 import numpy as np
-from model import Net
+from neural_nets.model_ssa import Net
 from functions.trajectory import J_supply_chain
 
 def sample_uniform_params(params_prev, param_max, param_min):

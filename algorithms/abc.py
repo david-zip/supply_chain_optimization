@@ -1,15 +1,13 @@
 """
 Artificial bee colony for neural net optimization
 """
-import time
 import copy
 import torch
 import numpy as np
 
+from functions.timer import timeit
+
 class Artificial_Bee_Colony():
-    """
-    Artificial bee colony for minimisation problems
-    """
 
     def __init__(self, model, env, **kwargs):
         """
@@ -19,11 +17,11 @@ class Artificial_Bee_Colony():
         - env                   =   class       # supply chain environment
         - kwargs['bounds']      =   [lb, ub]    # parameter bounds
         - kwargs['population']  =   50          # number of particles in swarm
-        - kwargs['maxiter']     =   50       # maximum number of iterations
+        - kwargs['maxiter']     =   50          # maximum number of iterations
         """
         # unpack the arguments
-        self.model      = model                     # neural network
-        self.env        = env                       # environment 
+        self.model      = model                 # neural network
+        self.env        = env                   # environment 
         self.args       = kwargs
         
         # store model parameters
@@ -60,16 +58,15 @@ class Artificial_Bee_Colony():
             
                 # initialize random parameters
                 self.params[key] = torch.rand(value.shape) * (self.ub - self.lb) + self.lb
-                self.bee_parameters.append(self.params)
+            self.bee_parameters.append(self.params)
 
-                # caluclate parameter reward
-                self.model.load_state_dict(self.params)
-                total_reward = function(self.env, SC_run_params, self.model)
-                self.bee_rewards.append(total_reward)
+            # caluclate parameter reward
+            self.model.load_state_dict(self.params)
+            total_reward = function(self.env, SC_run_params, self.model)
+            self.bee_rewards.append(total_reward)
         
         # initialize best solution and value
-        self.best_reward     = max(self.bee_rewards)
-        self.best_parameters = copy.deepcopy(self.bee_parameters[self.bee_rewards.index(self.best_reward)])
+        self._find_best()
     
     def _replace_bee_best(self, new_params, new_reward, i):
         """
@@ -104,18 +101,8 @@ class Artificial_Bee_Colony():
             param_diff = torch.sub(self.bee_parameters[i][key], random_parameters[key])
             new_params[key] = torch.add(self.bee_parameters[i][key], torch.mul(param_diff, random[key]))
         
-            # check if bound constraints have been breached
-            for tensor in new_params[key]:
-                tensor = tensor.unsqueeze(-1)
-                for param in tensor:
-                        
-                    # check if parameter is too large
-                    if param > self.ub:
-                        param = torch.tensor(self.ub, dtype=torch.float)
-                        
-                    # check if parameter is too small
-                    if param < self.lb:
-                        param = torch.tensor(self.lb, dtype=torch.float)
+            # check if bound constraints have been breached and replace
+            new_params[key] = torch.clamp(new_params[key], min=self.lb, max=self.ub)
 
         # determine new reward
         self.model.load_state_dict(new_params)
@@ -147,18 +134,8 @@ class Artificial_Bee_Colony():
             param_diff = torch.sub(self.bee_parameters[i][key], neighbour_params[key])
             new_params[key] = torch.add(self.bee_parameters[i][key], torch.mul(param_diff, random[key]))
         
-            # check if bound constraints have been breached
-            for tensor in new_params[key]:
-                tensor = tensor.unsqueeze(-1)
-                for param in tensor:
-                        
-                    # check if parameter is too large
-                    if param > self.ub:
-                        param = torch.tensor(self.ub, dtype=torch.float)
-                        
-                    # check if parameter is too small
-                    if param < self.lb:
-                        param = torch.tensor(self.lb, dtype=torch.float)
+            # check if bound constraints have been breached and replace
+            new_params[key] = torch.clamp(new_params[key], min=self.lb, max=self.ub)
 
         # determine new reward
         self.model.load_state_dict(new_params)
@@ -189,9 +166,9 @@ class Artificial_Bee_Colony():
 
     def _find_best(self):
         """
-        Finds best solution of the swarm and stores it
+        Finds best solution and stores it
         """
-        # determines best solution of swarm
+        # determines best solution
         maximum_reward = max(self.bee_rewards)
 
         # replaces best parameters found so far if better
@@ -199,13 +176,14 @@ class Artificial_Bee_Colony():
             self.best_reward     = maximum_reward
             self.best_parameters = copy.deepcopy(self.bee_parameters[self.bee_rewards.index(maximum_reward)])
     
-    def algorithm(self, function: any, SC_run_params: dict, print_every: int = 0):
+    @timeit
+    def algorithm(self, function: any, SC_run_params: dict, iter_debug: bool = True):
         """
         Artificial bee colony algorithm
 
         - function      =   J_supply_chain function (ssa verion)
         - SC_run_params =   J_supply_chain run parameters
-        - print_every   =   print best reward every n iterations (default = 0) (IMPLEMENT LATER)
+        - iter_debug    =   if true, prints ever 100 iterations
         """
         # initialize algorithm
         self._initialize(function, SC_run_params)
@@ -215,7 +193,6 @@ class Artificial_Bee_Colony():
 
         # start algorithm
         niter = 0
-        time_start = time.time()
         while niter < self.maxiter:
             for i in range(self.population):
                 
@@ -259,9 +236,9 @@ class Artificial_Bee_Colony():
 
             # Iteration counter
             niter += 1
-            if niter % 10 == 0:
-                print(f'{niter}')
-        time_end = time.time()
+            if iter_debug == True:
+                if niter % 10 == 0:
+                    print(f'{niter}')
 
         return self.best_parameters, self.best_reward, self.reward_list
 

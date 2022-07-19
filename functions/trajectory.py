@@ -3,6 +3,7 @@ J_supply_chain:
     run a complete trajectory
 """
 import torch
+from functions.demand import random_uniform_demand_si
 
 def J_supply_chain_reinforce(model, SC_run_params, policy):
     '''
@@ -14,7 +15,7 @@ def J_supply_chain_reinforce(model, SC_run_params, policy):
     control_lb = SC_run_params['control_lb'] 
     control_ub = SC_run_params['control_ub']
     demand_lb  = SC_run_params['demand_lb']
-    demand_lb  = SC_run_params['demand_lb']
+    demand_ub  = SC_run_params['demand_ub']
     start_inv  = SC_run_params['start_inv']
     demand_f   = SC_run_params['demand_f']      # random_uniform_demand_si
     x_norm     = SC_run_params['x_norm']
@@ -36,7 +37,7 @@ def J_supply_chain_reinforce(model, SC_run_params, policy):
 
     # === SC run === #
     for step_k in range(steps_tot):
-        d_k_                           = 13     #demand_f(demand_lb, demand_ub) #random_uniform_demand_si
+        d_k_                           = random_uniform_demand_si(demand_lb, demand_ub) #random_uniform_demand_si
         d_k                            = d_k_ + backlog
         sale_product, r_k, backlog     = model.advance_supply_chain_orders(order_k, d_k)
         #r_tot                         += r_k
@@ -60,7 +61,7 @@ def J_supply_chain_ssa(model, SC_run_params, policy):
     control_lb = SC_run_params['control_lb']
     control_ub = SC_run_params['control_ub']
     demand_lb  = SC_run_params['demand_lb']
-    demand_lb  = SC_run_params['demand_lb']
+    demand_ub  = SC_run_params['demand_ub']
     start_inv  = SC_run_params['start_inv']
     demand_f   = SC_run_params['demand_f']          #random_uniform_demand_si
     x_norm     = SC_run_params['x_norm']
@@ -78,7 +79,7 @@ def J_supply_chain_ssa(model, SC_run_params, policy):
 
     # === SC run === #
     for step_k in range(steps_tot):
-        d_k_                           = 13             #demand_f(demand_lb, demand_ub) #random_uniform_demand_si
+        d_k_                           = random_uniform_demand_si(demand_lb, demand_ub) #random_uniform_demand_si
         d_k                            = d_k_ + backlog
         sale_product, r_k, backlog     = model.advance_supply_chain_orders(order_k, d_k)
         r_tot                         += r_k

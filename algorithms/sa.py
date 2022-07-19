@@ -1,12 +1,12 @@
 """
 Simulated annealing for neural net optimization
 """
-import time
 import copy
 import torch
 import warnings
 import numpy as np
 
+from functions.timer import timeit
 
 class Simulated_Annealing():
 
@@ -23,8 +23,8 @@ class Simulated_Annealing():
         - kwargs['maxtime']     =   100         # maximum run time in seconds (IMPLEMENT LATER)
         """
         # unpack the arguments
-        self.model      = model                     # neural network
-        self.env        = env                       # environment 
+        self.model      = model                 # neural network
+        self.env        = env                   # environment 
         self.args       = kwargs
 
         # store model parameters
@@ -47,7 +47,6 @@ class Simulated_Annealing():
         # initialise list for algorithm
         self.best_rewards       = []                # best reward after every episode
         self.current_reward     = -1e8
-
 
     def _initialize(self, function, SC_run_params):
         """
@@ -103,13 +102,14 @@ class Simulated_Annealing():
         """
         self.T *= (1 - self.eps)
 
-    def algorithm(self, function: any, SC_run_params: dict, print_every: int = 0):
+    @timeit
+    def algorithm(self, function: any, SC_run_params: dict, iter_debug: bool = False):
         """
         Simulated annealling algorithm
 
         - function      =   J_supply_chain function (ssa verion)
         - SC_run_params =   J_supply_chain run parameters
-        - print_every   =   print best reward every n iterations (default = 0) (IMPLEMENT LATER)
+        - iter_debug    =   if true, prints ever 100 iterations
         """
         # suppress warnings
         warnings.filterwarnings('ignore')
@@ -119,7 +119,6 @@ class Simulated_Annealing():
 
         # start algorithm
         niter = 0
-        time_start = time.time()
         while self.T > self.Tf:
             self._neighbourhood_search()
             self._run_trajectory(function, SC_run_params)
@@ -131,9 +130,9 @@ class Simulated_Annealing():
 
             # iteration counter
             niter += 1
-            if niter % 100 == 0:
-                print(f'{niter}')
-        time_end = time.time()
+            if iter_debug == True:
+                if niter % 100 == 0:
+                    print(f'{niter}')
 
         return self.best_parameters, self.best_value, self.best_rewards
     
