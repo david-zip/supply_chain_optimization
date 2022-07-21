@@ -39,8 +39,8 @@ class Gaussian_Evolutionary_Strategy():
         # store algorithm hyper-parameters
         self.population = self.args['population']
         self.elite_cut  = self.args['elite_cut']
-        self.mean       = 0.
-        self.std        = 5.
+        self.mean       = {}
+        self.std        = {}
 
         # creating list
         self.parameters = []
@@ -58,22 +58,16 @@ class Gaussian_Evolutionary_Strategy():
         """
         for i in range(self.population):
 
-            # generate random solutions from a Gaussian distribution
+            # generate random solutions
             new_params = {}
             for key, value in self.params.items():
-                new_params[key] = torch.normal(mean=self.mean, std=self.std, size=value.shape)
-                
-                # ensure bounds are not breached
-                new_params[key] = torch.clamp(new_params[key], min=self.lb, max=self.ub)
+                new_params[key] = torch.rand(value.shape) * (self.ub - self.lb) + self.lb
             self.parameters.append(new_params)
             
             # calculate parameter reward
             self.model.load_state_dict(new_params)
             total_reward = function(self.env, SC_run_params, self.model)
             self.rewards.append(total_reward)
-        
-        self.mean = {}
-        self.std  = {}
 
         # find best set of parameters
         self._find_best()
@@ -108,7 +102,7 @@ class Gaussian_Evolutionary_Strategy():
             
             # calculate mean and standard deviation
             self.mean[key] = torch.mean(temp_mean_list)
-            self.std[key]  = torch.std(temp_std_list)
+            self.std[key]  = torch.mean(temp_std_list)
 
     def _update_parametrs(self, function, SC_run_params):
         """
@@ -121,7 +115,7 @@ class Gaussian_Evolutionary_Strategy():
             # generate random solutions from a Gaussian distribution
             new_params = {}
             for key, value in self.params.items():
-                new_params[key] = torch.normal(mean=self.mean[key], std=self.std[key], size=value.shape)
+                new_params[key] = torch.add(self.mean[key], torch.normal(mean=0, std=1., size=value.shape), alpha=self.std[key])
 
                 # ensure bounds are not breached
                 new_params[key] = torch.clamp(new_params[key], min=self.lb, max=self.ub)
@@ -145,12 +139,13 @@ class Gaussian_Evolutionary_Strategy():
             self.best_parameters = copy.deepcopy(self.parameters[self.rewards.index(maximum_reward)])
 
     @timeit
-    def algorithm(self, function: any, SC_run_params: dict):
+    def algorithm(self, function: any, SC_run_params: dict, iter_debug: bool = False):
         """
         Gaussian evolutionary strategy algorithm (vanilla ES)
 
         - function      =   J_supply_chain function (ssa verion)
         - SC_run_params =   J_supply_chain run parameters
+        - iter_debug    =   if true, prints ever 10 iterations
         """
         # initialize algorithm
         self._initialize(function, SC_run_params)
@@ -169,7 +164,7 @@ class Gaussian_Evolutionary_Strategy():
 
             niter += 1
 
-            if niter % 10 == 0:
+            if niter % 10 == 0 and iter_debug is True:
                 print(f'{niter}')
         
         return self.best_parameters, self.best_reward, self.reward_list

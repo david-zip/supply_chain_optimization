@@ -94,6 +94,8 @@ def train(maxIter=50, *args):
 
         plt.xlabel("Number of algorithm iterations")
         plt.ylabel("Total reward")
+        plt.yscale('log')
+
         plt.legend(loc="upper right")
 
         plt.savefig(f'plots/training_plots/simulated_annealing.png')
@@ -129,9 +131,9 @@ def train(maxIter=50, *args):
         PSO_params_ = {}
         PSO_params_['bounds']        = [-5, 5]
         PSO_params_['weights']       = [0.2, 0.2, 1.0]
-        PSO_params_['lambda']        = 1.0
-        PSO_params_['population']    = 100
-        PSO_params_['maxiter']       = 1000
+        PSO_params_['lambda']        = 0.99
+        PSO_params_['population']    = 10
+        PSO_params_['maxiter']       = 500
 
         # list to strore best rewards found
         PSO_best        = []
@@ -170,6 +172,7 @@ def train(maxIter=50, *args):
 
         plt.xlabel("Number of algorithm iterations")
         plt.ylabel("Total reward")
+        plt.yscale('log')
         plt.legend(loc="upper right")
 
         plt.savefig(f'plots/training_plots/particle_swarm_opimization.png')
@@ -211,8 +214,8 @@ def train(maxIter=50, *args):
         # define hyperparameters
         ABC_params_ = {}
         ABC_params_['bounds']        = [-5, 5]
-        ABC_params_['population']    = 50
-        ABC_params_['maxiter']       = 50
+        ABC_params_['population']    = 10
+        ABC_params_['maxiter']       = 100
 
         for i in range(maxIter):
             print(f"ABC {i+1}")
@@ -286,15 +289,15 @@ def train(maxIter=50, *args):
         GA_params_ = {}
         GA_params_['bounds']        = [-5.0, 5.0]
         GA_params_['numbits']       = 16
-        GA_params_['population']    = 50
+        GA_params_['population']    = 30
         GA_params_['cut']           = 0.4
-        GA_params_['maxiter']       = 50
+        GA_params_['maxiter']       = 100
 
         for i in range(maxIter):
             print(f"GA {i+1}")
             GA_optimizer = Genetic_Algorithm(model=policy_net, env=SC_model, **GA_params_)
 
-            best_policy, best_reward, R_list = GA_optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_)
+            best_policy, best_reward, R_list, best_gene = GA_optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_)
 
             GA_best.append(R_list)
 
@@ -360,9 +363,9 @@ def train(maxIter=50, *args):
         # define hyperparameters
         GES_params_ = {}
         GES_params_['bounds']        = [-5.0, 5.0]
-        GES_params_['population']    = 50
+        GES_params_['population']    = 30
         GES_params_['elite_cut']     = 0.4
-        GES_params_['maxiter']       = 50
+        GES_params_['maxiter']       = 100
 
         for i in range(maxIter):
             print(f"GES {i+1}")
@@ -413,6 +416,6 @@ if __name__=="__main__":
     - 'ges'         gaussian evolutionary strategy
     - 'reinforce'   reinforce (not implemented)
     """
-    keynames = ['sa']
+    keynames = ['pso']
 
-    train(50, *keynames)
+    train(30, *keynames)

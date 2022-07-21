@@ -76,6 +76,7 @@ def test_run(*args):
 
         plt.figure()
         plt.plot(R_list)
+        plt.yscale('log')
         plt.savefig('plots/test/testfigSA.png')
     
     if 'pso' in args:
