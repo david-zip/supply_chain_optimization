@@ -2,6 +2,7 @@
 Simulated annealing for neural net optimization
 """
 import copy
+from tkinter.tix import Tree
 import torch
 import warnings
 import numpy as np
@@ -130,9 +131,8 @@ class Simulated_Annealing():
 
             # iteration counter
             niter += 1
-            if iter_debug == True:
-                if niter % 100 == 0:
-                    print(f'{niter}')
+            if niter % 100 == 0 and iter_debug == True:
+                print(f'{niter}')
 
         return self.best_parameters, self.best_value, self.best_rewards
     

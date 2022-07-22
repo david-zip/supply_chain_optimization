@@ -179,9 +179,8 @@ class Particle_Swarm_Optimization():
 
             # Iteration counter
             niter += 1
-            if iter_debug == True:
-                if niter % 100 == 0:
-                    print(f'{niter}')
+            if niter % 100 == 0 and iter_debug == True:
+                print(f'{niter}')
         
         return self.gbest_parameters, self.gbest_reward, self.gbest_reward_list
 

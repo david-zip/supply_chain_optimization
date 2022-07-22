@@ -45,8 +45,7 @@ class Multi_echelon_SupplyChain:
         
     #############################
     # --- advance SC orders --- #
-    #############################    
-    
+    #############################
     def advance_supply_chain_orders(self, orders, demand):
         '''
         orders: np.array([raw_material=>eche_1, eche_1=>eche_2, ... , eche_n=>sale]) array of number of orders (integer value) in each echelon
@@ -105,7 +104,6 @@ class Multi_echelon_SupplyChain:
     ############################
     # --- reward function --- #
     ############################    
-    
     def supply_chain_reward_siso(self, orders_u, demand):
         '''
         reward for single raw material and single product

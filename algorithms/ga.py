@@ -279,9 +279,8 @@ class Genetic_Algorithm():
             # iteration counter
             niter += 1
 
-            if iter_debug == True:
-                if niter % 10 == 0:
-                    print(f'{niter}')
+            if niter % 10 == 0 and iter_debug == True:
+                print(f'{niter}')
             
         return self.best_parameters, self.best_gene_fitness, self.reward_list, self.best_gene
 
