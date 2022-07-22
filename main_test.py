@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from neural_nets.model_ssa import Net
 from neural_nets.model_reinforce import Net_reinforce
 from environment import Multi_echelon_SupplyChain
-from functions.demand import random_uniform_demand_si
-from functions.trajectory import J_supply_chain_ssa, J_supply_chain_reinforce
+from functions.demand import random_uniform_demand_si, seasonal_random_uniform_control_si
+from functions.trajectory import J_supply_chain_ssa, J_supply_chain_ssa_seasonality, J_supply_chain_reinforce
 
 from algorithms.sa import Simulated_Annealing
 from algorithms.pso import Particle_Swarm_Optimization
@@ -26,11 +26,18 @@ def test_run(*args):
     # state and control actions
     u_norm_   = np.array([[20/6, 20/6], [0, 0]]);  # here I am assuming entry-wise normalisation
     x_norm_   = np.array([10, 10]);                # here I am assuming equal normalisation for all state entries
+    
+    """
+    # define SC parameters (siso - ORIGINAL)
+    SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
+                    'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
+                    'material_cost':{1:12}, 'product_cost':{1:100}}
+    """
 
     # define SC parameters (siso - storage cost, prod_wt - comment)
     SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
                     'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
-                    'material_cost':{1:12}, 'product_cost':{1:100}}
+                    'material_cost':{0:12, 1:13, 2:11}, 'product_cost':{0:100, 1:300}}
 
     n_echelons_ = 2
 
@@ -53,7 +60,7 @@ def test_run(*args):
         SC_run_params_['demand_lb']  = 12
         SC_run_params_['demand_ub']  = 15
         SC_run_params_['start_inv']  = 10
-        SC_run_params_['demand_f']   = random_uniform_demand_si(12, 15)
+        SC_run_params_['demand_f']   = seasonal_random_uniform_control_si(12, 15, 365)
         SC_run_params_['u_norm']     = u_norm_
         SC_run_params_['x_norm']     = x_norm_
         SC_run_params_['hyparams']   = hyparams_
@@ -67,16 +74,16 @@ def test_run(*args):
 
         optimizer = Simulated_Annealing(model=policy_net, env=SC_model, **SA_params_)
 
-        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_, iter_debug=True)
+        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa_seasonality, SC_run_params=SC_run_params_, iter_debug=True)
 
-        print(best_policy)
+        #print(best_policy)
         print(best_reward)
 
         print('training done!')
 
         plt.figure()
         plt.plot(R_list)
-        plt.yscale('log')
+        #plt.yscale('log')
         plt.savefig('plots/test/testfigSA.png')
     
     if 'pso' in args:
@@ -198,13 +205,14 @@ def test_run(*args):
         GA_params_['numbits']       = 16
         GA_params_['population']    = 50
         GA_params_['cut']           = 0.4
-        GA_params_['maxiter']       = 50
+        GA_params_['maxiter']       = 100
 
         optimizer = Genetic_Algorithm(model=policy_net, env=SC_model, **GA_params_)
 
-        best_policy, best_reward, R_list, best_gene = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_, iter_debug=True)
+        best_policy, best_reward, R_list, best_gene = optimizer.algorithm(function=J_supply_chain_ssa_seasonality, SC_run_params=SC_run_params_, iter_debug=True)
 
         print(best_policy)
+        print(best_reward)
 
         print('training done!')
 
@@ -335,6 +343,6 @@ if __name__=="__main__":
     - 'ges'         gaussian evolutionary strategy
     - 'reinforce'   reinforce
     """
-    keynames = ['sa']
+    keynames = ['ga']
     
     test_run(*keynames)
