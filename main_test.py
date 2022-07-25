@@ -46,7 +46,7 @@ def test_run(*args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -91,7 +91,7 @@ def test_run(*args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -121,9 +121,9 @@ def test_run(*args):
 
         optimizer = Particle_Swarm_Optimization(model=policy_net, env=SC_model, **PSO_params_)
 
-        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_)
+        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa_seasonality, SC_run_params=SC_run_params_)
 
-        print(best_policy)
+        print(best_reward)
         
         print('training done!')
     
@@ -136,7 +136,7 @@ def test_run(*args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -164,9 +164,9 @@ def test_run(*args):
 
         optimizer = Artificial_Bee_Colony(model=policy_net, env=SC_model, **ABC_params_)
 
-        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_)
+        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa_seasonality, SC_run_params=SC_run_params_)
 
-        print(best_policy)
+        print(best_reward)
 
         print('training done!')
 
@@ -179,7 +179,7 @@ def test_run(*args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -211,7 +211,6 @@ def test_run(*args):
 
         best_policy, best_reward, R_list, best_gene = optimizer.algorithm(function=J_supply_chain_ssa_seasonality, SC_run_params=SC_run_params_, iter_debug=True)
 
-        print(best_policy)
         print(best_reward)
 
         print('training done!')
@@ -225,7 +224,7 @@ def test_run(*args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -254,10 +253,9 @@ def test_run(*args):
 
         optimizer = Gaussian_Evolutionary_Strategy(model=policy_net, env=SC_model, **GES_params_)
 
-        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_)
+        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa_seasonality, SC_run_params=SC_run_params_)
 
-        print(best_policy)
-
+        print(best_reward)
         print('training done!')
 
         plt.figure()
@@ -343,6 +341,6 @@ if __name__=="__main__":
     - 'ges'         gaussian evolutionary strategy
     - 'reinforce'   reinforce
     """
-    keynames = ['ga']
+    keynames = ['sa']
     
     test_run(*keynames)

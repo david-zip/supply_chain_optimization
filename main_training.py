@@ -34,8 +34,8 @@ def train(maxIter=50, *args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                        'output_size': 2}
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+                            'output_size': 2}
 
         # initialise neural net
         policy_net = Net(**hyparams_)
@@ -108,8 +108,8 @@ def train(maxIter=50, *args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                        'output_size': 2}
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+                            'output_size': 2}
 
         # initialise neural net
         policy_net = Net(**hyparams_)
@@ -185,8 +185,8 @@ def train(maxIter=50, *args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                        'output_size': 2}
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+                            'output_size': 2}
 
         # initialise neural net
         policy_net = Net(**hyparams_)
@@ -259,8 +259,9 @@ def train(maxIter=50, *args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                        'output_size': 2}
+        # policy hyperparameters
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+                            'output_size': 2}
 
         # initialise neural net
         policy_net = Net(**hyparams_)
@@ -334,8 +335,8 @@ def train(maxIter=50, *args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                        'output_size': 2}
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+                            'output_size': 2}
 
         # initialise neural net
         policy_net = Net(**hyparams_)

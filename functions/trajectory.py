@@ -112,7 +112,7 @@ def J_supply_chain_ssa_seasonality(model, SC_run_params, policy):
     r_tot   = 0
     backlog = 0 # no backlog initially
     # first order
-    state_norm                     = (model.supply_chain_state()[0,:] - x_norm[0])/x_norm[1]
+    state_norm                     = (model.supply_chain_state()[0,:-1] - x_norm[0])/x_norm[1]
     state_torch                    = torch.tensor((state_norm))
     order_k                        = policy(state_torch)
     order_k                        = (order_k*u_norm[0] + u_norm[1])[0,0]
@@ -124,7 +124,7 @@ def J_supply_chain_ssa_seasonality(model, SC_run_params, policy):
         sale_product, r_k, backlog     = model.advance_supply_chain_orders_DE(order_k, d_k)
         r_tot                         += r_k
         # agent makes order
-        state_norm                     = (model.supply_chain_state()[0,:] - x_norm[0])/x_norm[1]
+        state_norm                     = (model.supply_chain_state()[0,:-1] - x_norm[0])/x_norm[1]
         state_torch                    = torch.tensor((state_norm))
         order_k                        = policy(state_torch)
         order_k                        = (order_k*u_norm[0] + u_norm[1])[0,0]
