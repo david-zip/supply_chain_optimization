@@ -81,7 +81,7 @@ def J_supply_chain_ssa(model, SC_run_params, policy):
     for step_k in range(steps_tot):
         d_k_                           = random_uniform_demand_si(demand_lb, demand_ub) #random_uniform_demand_si
         d_k                            = d_k_ + backlog
-        sale_product, r_k, backlog     = model.advance_supply_chain_orders_DE(order_k, d_k)
+        sale_product, r_k, backlog     = model.advance_supply_chain_orders(order_k, d_k)
         r_tot                         += r_k
         # agent makes order
         state_norm                     = (model.supply_chain_state()[0,:] - x_norm[0])/x_norm[1]
@@ -119,7 +119,7 @@ def J_supply_chain_ssa_seasonality(model, SC_run_params, policy):
 
     # === SC run === #
     for step_k in range(steps_tot):
-        d_k_                           = seasonal_random_uniform_control_si(demand_lb, demand_ub, step_k)
+        d_k_                           = seasonal_random_uniform_control_si(demand_lb, demand_ub, model.supply_chain_state()[0,-1])
         d_k                            = d_k_ + backlog
         sale_product, r_k, backlog     = model.advance_supply_chain_orders_DE(order_k, d_k)
         r_tot                         += r_k

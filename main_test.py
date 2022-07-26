@@ -27,18 +27,18 @@ def test_run(*args):
     u_norm_   = np.array([[20/6, 20/6], [0, 0]]);  # here I am assuming entry-wise normalisation
     x_norm_   = np.array([10, 10]);                # here I am assuming equal normalisation for all state entries
     
-    """
+    
     # define SC parameters (siso - ORIGINAL)
     SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
                     'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
                     'material_cost':{1:12}, 'product_cost':{1:100}}
+    
     """
-
-    # define SC parameters (siso - storage cost, prod_wt - comment)
+    # define SC parameters (mimo - storage cost, prod_wt - comment)
     SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
                     'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
                     'material_cost':{0:12, 1:13, 2:11}, 'product_cost':{0:100, 1:300}}
-
+    """
     n_echelons_ = 2
 
     if 'sa' in args:
@@ -46,8 +46,8 @@ def test_run(*args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
-                            'output_size': 2}
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
+                        'output_size': 2}
 
         # initialise neural net
         policy_net = Net(**hyparams_)
@@ -74,24 +74,28 @@ def test_run(*args):
 
         optimizer = Simulated_Annealing(model=policy_net, env=SC_model, **SA_params_)
 
-        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa_seasonality, SC_run_params=SC_run_params_, iter_debug=True)
+        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_, iter_debug=True)
 
         #print(best_policy)
         print(best_reward)
+                
+        # save model parameters
+        torch.save(best_policy, 'neural_nets/parameters/test/sa.pth')
 
         print('training done!')
 
+        # plot figure
         plt.figure()
         plt.plot(R_list)
         #plt.yscale('log')
-        plt.savefig('plots/test/testfigSA.png')
+        plt.savefig('plots/test/training_plots/testfigSA.png')
     
     if 'pso' in args:
         ### INITIALIZE ENVIRONMENT ###
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -121,22 +125,25 @@ def test_run(*args):
 
         optimizer = Particle_Swarm_Optimization(model=policy_net, env=SC_model, **PSO_params_)
 
-        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa_seasonality, SC_run_params=SC_run_params_)
+        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_)
 
         print(best_reward)
+
+        # save model parameters
+        torch.save(best_policy, 'neural_nets/parameters/test/pso.pth')
         
         print('training done!')
     
         plt.figure()
         plt.plot(R_list)
-        plt.savefig('plots/test/testfigPSO.png')
+        plt.savefig('plots/test/training_plots/testfigPSO.png')
     
     if 'abc' in args:
         ### INITIALIZE ENVIRONMENT ###
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -164,22 +171,25 @@ def test_run(*args):
 
         optimizer = Artificial_Bee_Colony(model=policy_net, env=SC_model, **ABC_params_)
 
-        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa_seasonality, SC_run_params=SC_run_params_)
+        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_)
 
         print(best_reward)
+
+        # save model parameters
+        torch.save(best_policy, 'neural_nets/parameters/test/abc.pth')
 
         print('training done!')
 
         plt.figure()
         plt.plot(R_list)
-        plt.savefig('plots/test/testfigABC.png')
+        plt.savefig('plots/test/training_plots/testfigABC.png')
 
     if 'ga' in args:
         ### INITIALIZE ENVIRONMENT ###
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -209,22 +219,25 @@ def test_run(*args):
 
         optimizer = Genetic_Algorithm(model=policy_net, env=SC_model, **GA_params_)
 
-        best_policy, best_reward, R_list, best_gene = optimizer.algorithm(function=J_supply_chain_ssa_seasonality, SC_run_params=SC_run_params_, iter_debug=True)
+        best_policy, best_reward, R_list, best_gene = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_, iter_debug=True)
 
         print(best_reward)
+
+        # save model parameters
+        torch.save(best_policy, 'neural_nets/parameters/test/ga.pth')
 
         print('training done!')
 
         plt.figure()
         plt.plot(R_list)
-        plt.savefig('plots/test/testfigGA.png')
+        plt.savefig('plots/test/training_plots/testfigGA.png')
     
     if "ges" in args:
         ### INITIALIZE ENVIRONMENT ###
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -253,14 +266,18 @@ def test_run(*args):
 
         optimizer = Gaussian_Evolutionary_Strategy(model=policy_net, env=SC_model, **GES_params_)
 
-        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa_seasonality, SC_run_params=SC_run_params_)
+        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_)
 
         print(best_reward)
+
+        # save model parameters
+        torch.save(best_policy, 'neural_nets/parameters/test/ges.pth')
+
         print('training done!')
 
         plt.figure()
         plt.plot(R_list)
-        plt.savefig('plots/test/testfigGES.png')
+        plt.savefig('plots/test/training_plots/testfigGES.png')
 
     if 'reinforce' in args:
         ### INITIALIZE ENVIRONMENT ###
@@ -341,6 +358,6 @@ if __name__=="__main__":
     - 'ges'         gaussian evolutionary strategy
     - 'reinforce'   reinforce
     """
-    keynames = ['sa']
+    keynames = ['ga']
     
     test_run(*keynames)

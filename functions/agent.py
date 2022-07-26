@@ -1,5 +1,5 @@
 """
-Suppy chain agent
+Simple suppy chain agent
 """
 import numpy as np
 

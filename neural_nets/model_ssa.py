@@ -17,7 +17,7 @@ class Net(nn.Module):
     # defining ANN topology 
     self.input_size = self.args['input_size']
     self.output_sz  = self.args['output_size']
-    self.hs1        = int(self.input_size/2)              # !! parameters change manually
+    self.hs1        = int(self.input_size*2)              # !! parameters change manually
     self.hs2        = self.input_size + self.output_sz    # !! parameters change manually
     self.hs3        = self.output_sz*2                    # !! parameter  change manually
 

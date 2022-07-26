@@ -177,7 +177,7 @@ class Artificial_Bee_Colony():
             self.best_parameters = copy.deepcopy(self.bee_parameters[self.bee_rewards.index(maximum_reward)])
     
     @timeit
-    def algorithm(self, function: any, SC_run_params: dict, iter_debug: bool = True):
+    def algorithm(self, function: any, SC_run_params: dict, iter_debug: bool = False):
         """
         Artificial bee colony algorithm
 

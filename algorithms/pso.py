@@ -153,7 +153,7 @@ class Particle_Swarm_Optimization():
         self.w = self.w0 * np.exp(-self.lbda*niter)
 
     @timeit
-    def algorithm(self, function: any, SC_run_params: dict, iter_debug: bool = True):
+    def algorithm(self, function: any, SC_run_params: dict, iter_debug: bool = False):
         """
         Particle swarm optimization algorithm
 

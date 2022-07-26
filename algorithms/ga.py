@@ -140,7 +140,7 @@ class Genetic_Algorithm():
 
         # select the best gene from the k individuals
         for gene in shuffled_gene_pool:
-            if self.gene_fitness[gene] < self.gene_fitness[champion]:
+            if self.gene_fitness[gene] > self.gene_fitness[champion]:
                 champion = gene
 
         return champion

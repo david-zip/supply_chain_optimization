@@ -9,7 +9,6 @@ class Multi_echelon_SupplyChain:
     def __init__(self, n_echelons, SC_params, connectivity_M='none', reward_f='none'):
         '''
         Input parameters:
-
         - n_echelons                        = 2                  # number of echelons
         - connectivity_M                    = [[],[]]            # Not implemented: a conectivity matrix from each echelon (only for multi product) 
         - SC_params['material_cost']        = {0:12, 1:13, 2:11} # for 3 raw materials
@@ -76,7 +75,7 @@ class Multi_echelon_SupplyChain:
             sale_product = orders_called[-1]
             # update reward
             if self.reward_f == 'none':
-                self.supply_chain_reward_mimo(orders_called, demand)
+                self.supply_chain_reward_siso(orders_called, demand)
             # extra demand that needs to be covered
             backlog = max(0, demand - orders_called[-1])
             # == return == #
@@ -135,8 +134,8 @@ class Multi_echelon_SupplyChain:
         # reshape inventory
         SC_inventory_ = SC_inventory_.reshape((1,(max_wt+1)*n_echelons), order='F')
         # add time to state
-        SC_state = np.hstack((SC_inventory_,np.array([[time_k]])))
-        #SC_state  = SC_inventory_    
+        #SC_state = np.hstack((SC_inventory_,np.array([[time_k]])))
+        SC_state  = SC_inventory_    
         # return state
         return SC_state
 
@@ -146,7 +145,6 @@ class Multi_echelon_SupplyChain:
     def supply_chain_reward_siso(self, orders_u, demand):
         '''
         reward for single raw material and single product
-
         orders_u:    the orders actually done 'orders_called' which are the control actions.
         inventory_x: notice this is not the state but the inventory.
         demand     : how many sales where asked for.
@@ -184,7 +182,6 @@ class Multi_echelon_SupplyChain:
     def supply_chain_reward_mimo(self, orders_u, demand):
         '''
         reward for (eventually) multiple raw materials and multiple products
-
         orders_u:    the orders actually done 'orders_called' which are the control actions.
         inventory_x: notice this is not the state but the inventory.
         demand     : how many sales where asked for.
