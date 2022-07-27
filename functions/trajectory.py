@@ -20,7 +20,7 @@ def J_supply_chain_reinforce(model, SC_run_params, policy):
     demand_f   = SC_run_params['demand_f']      # random_uniform_demand_si
     x_norm     = SC_run_params['x_norm']
 
-    # se initial inventory
+    # set initial inventory
     model.SC_inventory[:,:] = start_inv         # starting inventory
     
     # reward
@@ -66,7 +66,7 @@ def J_supply_chain_ssa(model, SC_run_params, policy):
     demand_f   = SC_run_params['demand_f']          #random_uniform_demand_si
     x_norm     = SC_run_params['x_norm']
 
-    # se initial inventory
+    # set initial inventory
     model.SC_inventory[:,:] = start_inv             # starting inventory
     # reward
     r_tot   = 0
@@ -106,7 +106,7 @@ def J_supply_chain_ssa_seasonality(model, SC_run_params, policy):
     demand_f   = SC_run_params['demand_f']          #seasonal_random_uniform_control_si(lb, ub, tk)
     x_norm     = SC_run_params['x_norm']
 
-    # se initial inventory
+    # set initial inventory
     model.SC_inventory[:,:] = start_inv             # starting inventory
     # reward
     r_tot   = 0

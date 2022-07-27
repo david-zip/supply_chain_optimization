@@ -124,8 +124,8 @@ class Genetic_Algorithm():
 
         if self.gene_fitness[best_gene_in_generation] > self.best_gene_fitness:
             self.best_gene         = best_gene_in_generation
-            self.best_gene_fitness = self.gene_fitness[self.best_gene]
-            self.best_parameters   = copy.deepcopy(self.gene_parameters[self.best_gene])
+            self.best_gene_fitness = self.gene_fitness[best_gene_in_generation]
+            self.best_parameters   = copy.deepcopy(self.gene_parameters[best_gene_in_generation])
 
     def _selection(self):
         """
@@ -271,7 +271,7 @@ class Genetic_Algorithm():
             self.gene_fitness.clear()
 
             for gene in self.gene_pool:
-                self.gene_parameters[gene] = self.params
+                self.gene_parameters[gene] = copy.deepcopy(self.best_parameters)
 
             # Stores best solution found in each iteration
             self.reward_list.append(self.best_gene_fitness)

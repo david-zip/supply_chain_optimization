@@ -146,13 +146,13 @@ def evaluate(**kwargs):
 
 if __name__=="__main__":
     """
-    keywords['io']
-    keywords['echelon']
-    keywords['path']
+    keywords['io']       = 'siso' or 'mimo'
+    keywords['echelons'] = int
+    keywords['path']     = relative file pathway for parameters
     """
     keywords = {}
     keywords['io']       = 'siso'
     keywords['echelons'] = 2
-    keywords['path']     = 'neural_nets/parameters/test/ga.pth'
+    keywords['path']     = 'neural_nets/parameters/test/ges.pth'
 
     evaluate(**keywords)

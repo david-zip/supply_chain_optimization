@@ -191,26 +191,6 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy():
         self.env        = env                       # environment 
         self.args       = kwargs
 
-class Natural_Evolutionary_Strategy():
-    
-    def __init__(self, model, env, **kwargs):
-        """
-        Initialize algorithm hyper-parameter 
-        
-        ***ADJUST LATER***
-
-        - model                 =   class       # neural network
-        - env                   =   class       # supply chain environment
-        - kwargs['bounds']      =   [lb, ub]    # parameter bounds
-        - kwargs['population']  =   100         # population size
-        - kwargs['elite_cut']   =   0.4         # percent of population in elite set
-        - kwargs['maxiter']     =   1000        # maximum number of iterations
-        """
-        # unpack the arguments
-        self.model      = model                     # neural network
-        self.env        = env                       # environment 
-        self.args       = kwargs
-
         # store model parameters
         self.params     = self.model.state_dict()   # inital parameter values
 
@@ -238,6 +218,27 @@ class Natural_Evolutionary_Strategy():
         self.best_parameters  = copy.deepcopy(self.params)
         self.best_reward      = -1e8
         self.reward_list      = []
+
+class Natural_Evolutionary_Strategy():
+    
+    def __init__(self, model, env, **kwargs):
+        """
+        Initialize algorithm hyper-parameter 
+        
+        ***ADJUST LATER***
+
+        - model                 =   class       # neural network
+        - env                   =   class       # supply chain environment
+        - kwargs['bounds']      =   [lb, ub]    # parameter bounds
+        - kwargs['population']  =   100         # population size
+        - kwargs['elite_cut']   =   0.4         # percent of population in elite set
+        - kwargs['maxiter']     =   1000        # maximum number of iterations
+        """
+        # unpack the arguments
+        self.model      = model                     # neural network
+        self.env        = env                       # environment 
+        self.args       = kwargs
+
 
 if __name__=="__main__":
     pass
