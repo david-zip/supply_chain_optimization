@@ -92,7 +92,7 @@ def test_run(*args):
         # plot figure
         plt.figure()
         plt.plot(R_list)
-        #plt.yscale('log')
+        plt.yscale('log')
         plt.savefig('plots/test/training_plots/testfigSA.png')
     
     if 'pso' in args:
@@ -462,8 +462,9 @@ if __name__=="__main__":
     - 'ga'          genetic algorithm
     - 'ges'         gaussian evolutionary strategy
     - 'cma'         covariance matrix adaptation evolutionary strategy
+    - 'de'          differential evolution
     - 'reinforce'   reinforce
     """
-    keynames = ['de']
+    keynames = ['sa']
     
     test_run(*keynames)
