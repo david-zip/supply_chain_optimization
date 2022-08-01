@@ -8,14 +8,19 @@ import matplotlib.pyplot as plt
 from neural_nets.model_ssa import Net
 from neural_nets.model_reinforce import Net_reinforce
 from environment import Multi_echelon_SupplyChain
-from functions.demand import random_uniform_demand_si, seasonal_random_uniform_control_si
-from functions.trajectory import J_supply_chain_ssa, J_supply_chain_ssa_seasonality, J_supply_chain_reinforce
+from functions.demand import random_uniform_demand_si, \
+                                seasonal_random_uniform_control_si
+from functions.trajectory import J_supply_chain_ssa, \
+                                    J_supply_chain_ssa_seasonality, \
+                                    J_supply_chain_reinforce
 
 from algorithms.sa import Simulated_Annealing
 from algorithms.pso import Particle_Swarm_Optimization
 from algorithms.abc import Artificial_Bee_Colony
 from algorithms.ga import Genetic_Algorithm
-from algorithms.es import Gaussian_Evolutionary_Strategy, Covariance_Matrix_Adaption_Evolutionary_Strategy
+from algorithms.de import Differential_Evolution
+from algorithms.es import Gaussian_Evolutionary_Strategy, \
+                            Covariance_Matrix_Adaption_Evolutionary_Strategy
 from algorithms.reinforce import reinforce
 
 def test_run(*args):
@@ -279,6 +284,106 @@ def test_run(*args):
         plt.plot(R_list)
         plt.savefig('plots/test/training_plots/testfigGES.png')
 
+    if "cma" in args:
+        ### INITIALIZE ENVIRONMENT ###
+        SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
+
+        # policy hyperparameters
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
+                            'output_size': 2}
+
+        # initialise neural net
+        policy_net = Net(**hyparams_)
+
+        # run parameters
+        SC_run_params_ = {}
+        SC_run_params_['steps_tot']  = 365
+        SC_run_params_['control_lb'] = 0
+        SC_run_params_['control_ub'] = 20
+        SC_run_params_['demand_lb']  = 12
+        SC_run_params_['demand_ub']  = 15
+        SC_run_params_['start_inv']  = 10
+        SC_run_params_['demand_f']   = random_uniform_demand_si(12, 15)
+        SC_run_params_['u_norm']     = u_norm_
+        SC_run_params_['x_norm']     = x_norm_
+        SC_run_params_['hyparams']   = hyparams_
+
+        ### INITIALISE ALGORITHM ###
+        # define hyperparameters
+        CMA_params_ = {}
+        CMA_params_['bounds']        = [-5.0, 5.0]
+        CMA_params_['population']    = 20
+        CMA_params_['mean']          = 0
+        CMA_params_['step_size']     = 1
+        CMA_params_['elite_cut']     = 0.5
+        CMA_params_['maxiter']       = 50
+
+        optimizer = Covariance_Matrix_Adaption_Evolutionary_Strategy(model=policy_net, env=SC_model, **CMA_params_)
+
+        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_, iter_debug=True)
+
+        print(best_reward)
+
+        # save model parameters
+        torch.save(best_policy, 'neural_nets/parameters/test/cma.pth')
+
+        print('training done!')
+
+        plt.figure()
+        plt.plot(R_list)
+        plt.savefig('plots/test/training_plots/testfigCMA.png')
+
+    if "de" in args:
+        ### INITIALIZE ENVIRONMENT ###
+        SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
+
+        # policy hyperparameters
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
+                        'output_size': 2}
+
+        # initialise neural net
+        policy_net = Net(**hyparams_)
+
+        # run parameters
+        SC_run_params_ = {}
+        SC_run_params_['steps_tot']  = 365
+        SC_run_params_['control_lb'] = 0
+        SC_run_params_['control_ub'] = 20
+        SC_run_params_['demand_lb']  = 12
+        SC_run_params_['demand_ub']  = 15
+        SC_run_params_['start_inv']  = 10
+        SC_run_params_['demand_f']   = seasonal_random_uniform_control_si(12, 15, 365)
+        SC_run_params_['u_norm']     = u_norm_
+        SC_run_params_['x_norm']     = x_norm_
+        SC_run_params_['hyparams']   = hyparams_
+
+        ### INITIALISE ALGORITHM ###
+        # define hyperparameters
+        DE_params_ = {}
+        DE_params_['bounds']     = [-5, 5]
+        DE_params_['population'] = 100
+        DE_params_['scale']      = 0.5
+        DE_params_['mutation']   = 0.3
+        DE_params_['maxiter']    = 1000
+
+        optimizer = Differential_Evolution(model=policy_net, env=SC_model, **DE_params_)
+
+        best_policy, best_reward, R_list = optimizer.algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_, iter_debug=True)
+
+        #print(best_policy)
+        print(best_reward)
+
+        # save model parameters
+        torch.save(best_policy, 'neural_nets/parameters/test/de.pth')
+
+        print('training done!')
+
+        # plot figure
+        plt.figure()
+        plt.plot(R_list)
+        #plt.yscale('log')
+        plt.savefig('plots/test/training_plots/testfigDE.png')
+
     if 'reinforce' in args:
         ### INITIALIZE ENVIRONMENT ###
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
@@ -356,8 +461,9 @@ if __name__=="__main__":
     - 'abc'         artificial bee colony
     - 'ga'          genetic algorithm
     - 'ges'         gaussian evolutionary strategy
+    - 'cma'         covariance matrix adaptation evolutionary strategy
     - 'reinforce'   reinforce
     """
-    keynames = ['ga']
+    keynames = ['de']
     
     test_run(*keynames)

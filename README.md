@@ -8,5 +8,6 @@
 - add GA to environment :)
 - implement gaussian ES :)
 - implement CMA-ES
-- implement differential evolution
+- implement differential evolution :)
 - implement NES (optional)
+- add parallelisation to SA

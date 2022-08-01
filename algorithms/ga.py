@@ -53,7 +53,6 @@ class Genetic_Algorithm():
         self.best_gene         = 0
         self.best_parameters   = copy.deepcopy(self.params)
         self.best_gene_fitness = -1e8
-
         self.reward_list       = []
 
     def _initialize(self, function, SC_run_params):

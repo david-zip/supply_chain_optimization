@@ -32,7 +32,7 @@ class Net_reinforce(nn.Module):
     y           = F.leaky_relu(self.hidden1(x), 0.1)
     y           = F.leaky_relu(self.hidden2(y), 0.1)
     y           = F.leaky_relu(self.hidden3(y))            
-    y           = F.softmax(self.output(y), dim=-1)                 # range (0,1)
+    y           = F.softmax(self.output(y), dim=-1)       # range (0,1)
     y           = y.detach().numpy()
 
     return np.around(y)                                   # notice the integer rounding

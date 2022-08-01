@@ -11,7 +11,7 @@
 # What do we want to show them
 
 - Trainings plot for CMA-ES (MINIMUM) + DF (IF CAN)
-
+    
 - Show whatever plot that exist
 
 - Explain out adjustments

@@ -34,7 +34,7 @@ def train(maxIter=50, *args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -108,7 +108,7 @@ def train(maxIter=50, *args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -185,7 +185,7 @@ def train(maxIter=50, *args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -247,6 +247,7 @@ def train(maxIter=50, *args):
 
         plt.xlabel("Number of algorithm iterations")
         plt.ylabel("Total reward")
+        plt.yscale('log')
         plt.legend(loc="upper right")
 
         plt.savefig(f'plots/training_plots/articial_bee_colony.png')
@@ -260,7 +261,7 @@ def train(maxIter=50, *args):
 
         # policy hyperparameters
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -290,7 +291,7 @@ def train(maxIter=50, *args):
         GA_params_ = {}
         GA_params_['bounds']        = [-5.0, 5.0]
         GA_params_['numbits']       = 16
-        GA_params_['population']    = 30
+        GA_params_['population']    = 20
         GA_params_['cut']           = 0.4
         GA_params_['maxiter']       = 100
 
@@ -323,6 +324,7 @@ def train(maxIter=50, *args):
 
         plt.xlabel("Number of algorithm iterations")
         plt.ylabel("Total reward")
+        plt.yscale('log')
         plt.legend(loc="upper right")
 
         plt.savefig(f'plots/training_plots/genetic_algorithm.png')
@@ -335,7 +337,7 @@ def train(maxIter=50, *args):
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
         # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:-1].shape[0], 
+        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
                             'output_size': 2}
 
         # initialise neural net
@@ -364,7 +366,7 @@ def train(maxIter=50, *args):
         # define hyperparameters
         GES_params_ = {}
         GES_params_['bounds']        = [-5.0, 5.0]
-        GES_params_['population']    = 30
+        GES_params_['population']    = 20
         GES_params_['elite_cut']     = 0.4
         GES_params_['maxiter']       = 100
 
@@ -397,6 +399,7 @@ def train(maxIter=50, *args):
 
         plt.xlabel("Number of algorithm iterations")
         plt.ylabel("Total reward")
+        plt.yscale('log')
         plt.legend(loc="upper right")
 
         plt.savefig(f'plots/training_plots/gaussian_evolutionary_strategy.png')
@@ -417,6 +420,6 @@ if __name__=="__main__":
     - 'ges'         gaussian evolutionary strategy
     - 'reinforce'   reinforce (not implemented)
     """
-    keynames = ['pso']
+    keynames = ['ges']
 
     train(30, *keynames)
