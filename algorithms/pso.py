@@ -5,9 +5,10 @@ import copy
 import torch
 import numpy as np
 
-from functions.timer import timeit
+from algorithms.optim import OptimClass
+from helper_functions.timer import timeit
 
-class Particle_Swarm_Optimization():
+class Particle_Swarm_Optimization(OptimClass):
 
     def __init__(self, model, env, **kwargs):
         """
@@ -22,7 +23,7 @@ class Particle_Swarm_Optimization():
         - kwargs['lambda']      =   1.0         # weight decay exponent
         - kwargs['population']  =   50          # number of particles in swarm
         - kwargs['maxiter']     =   1000        # maximum number of iterations
-        """
+        """ 
         # unpack the arguments
         self.model      = model                 # neural network
         self.env        = env                   # environment 

@@ -11,3 +11,7 @@
 - implement differential evolution :)
 - implement NES (optional)
 - add parallelisation to SA :)
+
+create a an abstract class
+define an abstract method so they all have the same arguments
+- can store in an array 

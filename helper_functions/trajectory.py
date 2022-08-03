@@ -3,7 +3,7 @@ J_supply_chain:
     run a complete trajectory
 """
 import torch
-from functions.demand import random_uniform_demand_si, seasonal_random_uniform_control_si
+from helper_functions.demand import random_uniform_demand_si, seasonal_random_uniform_control_si
 
 def J_supply_chain_reinforce(model, SC_run_params, policy):
     '''

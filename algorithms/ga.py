@@ -5,9 +5,10 @@ import copy
 import torch
 import numpy as np
 
-from functions.timer import timeit
+from algorithms.optim import OptimClass
+from helper_functions.timer import timeit
 
-class Genetic_Algorithm():
+class Genetic_Algorithm(OptimClass):
 
     def __init__(self, model, env, **kwargs):
         """

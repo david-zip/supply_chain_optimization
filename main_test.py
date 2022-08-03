@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 from neural_nets.model_ssa import Net
 from neural_nets.model_reinforce import Net_reinforce
 from environment import Multi_echelon_SupplyChain
-from functions.demand import random_uniform_demand_si, \
+from helper_functions.demand import random_uniform_demand_si, \
                                 seasonal_random_uniform_control_si
-from functions.trajectory import J_supply_chain_ssa, \
+from helper_functions.trajectory import J_supply_chain_ssa, \
                                     J_supply_chain_ssa_seasonality, \
                                     J_supply_chain_reinforce
 
@@ -46,30 +46,30 @@ def test_run(*args):
     """
     n_echelons_ = 2
 
+    ### INITIALIZE ENVIRONMENT ###
+    SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
+
+    # policy hyperparameters
+    hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
+                    'output_size': 2}
+
+    # initialise neural net
+    policy_net = Net(**hyparams_)
+
+    # run parameters
+    SC_run_params_ = {}
+    SC_run_params_['steps_tot']  = 365
+    SC_run_params_['control_lb'] = 0
+    SC_run_params_['control_ub'] = 20
+    SC_run_params_['demand_lb']  = 12
+    SC_run_params_['demand_ub']  = 15
+    SC_run_params_['start_inv']  = 10
+    SC_run_params_['demand_f']   = seasonal_random_uniform_control_si(12, 15, 365)
+    SC_run_params_['u_norm']     = u_norm_
+    SC_run_params_['x_norm']     = x_norm_
+    SC_run_params_['hyparams']   = hyparams_
+
     if 'sa' in args:
-        ### INITIALIZE ENVIRONMENT ###
-        SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
-
-        # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                        'output_size': 2}
-
-        # initialise neural net
-        policy_net = Net(**hyparams_)
-
-        # run parameters
-        SC_run_params_ = {}
-        SC_run_params_['steps_tot']  = 365
-        SC_run_params_['control_lb'] = 0
-        SC_run_params_['control_ub'] = 20
-        SC_run_params_['demand_lb']  = 12
-        SC_run_params_['demand_ub']  = 15
-        SC_run_params_['start_inv']  = 10
-        SC_run_params_['demand_f']   = seasonal_random_uniform_control_si(12, 15, 365)
-        SC_run_params_['u_norm']     = u_norm_
-        SC_run_params_['x_norm']     = x_norm_
-        SC_run_params_['hyparams']   = hyparams_
-
         ### INITIALISE ALGORITHM ###
         # define hyperparameters
         SA_params_ = {}
@@ -158,29 +158,6 @@ def test_run(*args):
         plt.savefig('plots/test/training_plots/testfigPSA.png')
     
     if 'pso' in args:
-        ### INITIALIZE ENVIRONMENT ###
-        SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
-
-        # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                            'output_size': 2}
-
-        # initialise neural net
-        policy_net = Net(**hyparams_)
-
-        # run parameters
-        SC_run_params_ = {}
-        SC_run_params_['steps_tot']  = 365
-        SC_run_params_['control_lb'] = 0
-        SC_run_params_['control_ub'] = 20
-        SC_run_params_['demand_lb']  = 12
-        SC_run_params_['demand_ub']  = 15
-        SC_run_params_['start_inv']  = 10
-        SC_run_params_['demand_f']   = random_uniform_demand_si(12, 15)
-        SC_run_params_['u_norm']     = u_norm_
-        SC_run_params_['x_norm']     = x_norm_
-        SC_run_params_['hyparams']   = hyparams_
-
         ### INITIALISE ALGORITHM ###
         # define hyperparameters
         PSO_params_ = {}
@@ -206,29 +183,6 @@ def test_run(*args):
         plt.savefig('plots/test/training_plots/testfigPSO.png')
     
     if 'abc' in args:
-        ### INITIALIZE ENVIRONMENT ###
-        SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
-
-        # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                            'output_size': 2}
-
-        # initialise neural net
-        policy_net = Net(**hyparams_)
-
-        # run parameters
-        SC_run_params_ = {}
-        SC_run_params_['steps_tot']  = 365
-        SC_run_params_['control_lb'] = 0
-        SC_run_params_['control_ub'] = 20
-        SC_run_params_['demand_lb']  = 12
-        SC_run_params_['demand_ub']  = 15
-        SC_run_params_['start_inv']  = 10
-        SC_run_params_['demand_f']   = random_uniform_demand_si(12, 15)
-        SC_run_params_['u_norm']     = u_norm_
-        SC_run_params_['x_norm']     = x_norm_
-        SC_run_params_['hyparams']   = hyparams_
-
         ### INITIALISE ALGORITHM ###
         # define hyperparameters
         ABC_params_ = {}
@@ -252,29 +206,6 @@ def test_run(*args):
         plt.savefig('plots/test/training_plots/testfigABC.png')
 
     if 'ga' in args:
-        ### INITIALIZE ENVIRONMENT ###
-        SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
-
-        # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                            'output_size': 2}
-
-        # initialise neural net
-        policy_net = Net(**hyparams_)
-
-        # run parameters
-        SC_run_params_ = {}
-        SC_run_params_['steps_tot']  = 365
-        SC_run_params_['control_lb'] = 0
-        SC_run_params_['control_ub'] = 20
-        SC_run_params_['demand_lb']  = 12
-        SC_run_params_['demand_ub']  = 15
-        SC_run_params_['start_inv']  = 10
-        SC_run_params_['demand_f']   = random_uniform_demand_si(12, 15)
-        SC_run_params_['u_norm']     = u_norm_
-        SC_run_params_['x_norm']     = x_norm_
-        SC_run_params_['hyparams']   = hyparams_
-
         ### INITIALISE ALGORITHM ###
         # define hyperparameters
         GA_params_ = {}
@@ -300,29 +231,6 @@ def test_run(*args):
         plt.savefig('plots/test/training_plots/testfigGA.png')
     
     if "ges" in args:
-        ### INITIALIZE ENVIRONMENT ###
-        SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
-
-        # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                            'output_size': 2}
-
-        # initialise neural net
-        policy_net = Net(**hyparams_)
-
-        # run parameters
-        SC_run_params_ = {}
-        SC_run_params_['steps_tot']  = 365
-        SC_run_params_['control_lb'] = 0
-        SC_run_params_['control_ub'] = 20
-        SC_run_params_['demand_lb']  = 12
-        SC_run_params_['demand_ub']  = 15
-        SC_run_params_['start_inv']  = 10
-        SC_run_params_['demand_f']   = random_uniform_demand_si(12, 15)
-        SC_run_params_['u_norm']     = u_norm_
-        SC_run_params_['x_norm']     = x_norm_
-        SC_run_params_['hyparams']   = hyparams_
-
         ### INITIALISE ALGORITHM ###
         # define hyperparameters
         GES_params_ = {}
@@ -347,29 +255,6 @@ def test_run(*args):
         plt.savefig('plots/test/training_plots/testfigGES.png')
 
     if "cma" in args:
-        ### INITIALIZE ENVIRONMENT ###
-        SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
-
-        # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                            'output_size': 2}
-
-        # initialise neural net
-        policy_net = Net(**hyparams_)
-
-        # run parameters
-        SC_run_params_ = {}
-        SC_run_params_['steps_tot']  = 365
-        SC_run_params_['control_lb'] = 0
-        SC_run_params_['control_ub'] = 20
-        SC_run_params_['demand_lb']  = 12
-        SC_run_params_['demand_ub']  = 15
-        SC_run_params_['start_inv']  = 10
-        SC_run_params_['demand_f']   = random_uniform_demand_si(12, 15)
-        SC_run_params_['u_norm']     = u_norm_
-        SC_run_params_['x_norm']     = x_norm_
-        SC_run_params_['hyparams']   = hyparams_
-
         ### INITIALISE ALGORITHM ###
         # define hyperparameters
         CMA_params_ = {}
@@ -396,29 +281,6 @@ def test_run(*args):
         plt.savefig('plots/test/training_plots/testfigCMA.png')
 
     if "de" in args:
-        ### INITIALIZE ENVIRONMENT ###
-        SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
-
-        # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                        'output_size': 2}
-
-        # initialise neural net
-        policy_net = Net(**hyparams_)
-
-        # run parameters
-        SC_run_params_ = {}
-        SC_run_params_['steps_tot']  = 365
-        SC_run_params_['control_lb'] = 0
-        SC_run_params_['control_ub'] = 20
-        SC_run_params_['demand_lb']  = 12
-        SC_run_params_['demand_ub']  = 15
-        SC_run_params_['start_inv']  = 10
-        SC_run_params_['demand_f']   = seasonal_random_uniform_control_si(12, 15, 365)
-        SC_run_params_['u_norm']     = u_norm_
-        SC_run_params_['x_norm']     = x_norm_
-        SC_run_params_['hyparams']   = hyparams_
-
         ### INITIALISE ALGORITHM ###
         # define hyperparameters
         DE_params_ = {}
@@ -447,29 +309,6 @@ def test_run(*args):
         plt.savefig('plots/test/training_plots/testfigDE.png')
 
     if 'reinforce' in args:
-        ### INITIALIZE ENVIRONMENT ###
-        SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
-
-        # policy hyperparameters
-        hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                            'output_size': 2}
-
-        # initialise neural net
-        policy_net = Net(**hyparams_)
-
-        # run parameters
-        SC_run_params_ = {}
-        SC_run_params_['steps_tot']  = 365
-        SC_run_params_['control_lb'] = 0
-        SC_run_params_['control_ub'] = 20
-        SC_run_params_['demand_lb']  = 12
-        SC_run_params_['demand_ub']  = 15
-        SC_run_params_['start_inv']  = 10
-        SC_run_params_['demand_f']   = random_uniform_demand_si(12, 15)
-        SC_run_params_['u_norm']     = u_norm_
-        SC_run_params_['x_norm']     = x_norm_
-        SC_run_params_['hyparams']   = hyparams_
-
         ### INITIALISE ALGORITHM ###
         # define hyperparameters
         GAMMA = 0.90
@@ -518,7 +357,7 @@ def test_run(*args):
 if __name__=="__main__":
     """
     Options:
-    - 'sa'          simulatied annealing
+    - 'sa'          simulated annealing
     - 'psa'         parallelized simulated annealing
     - 'pso'         particle swarm optimization
     - 'abc'         artificial bee colony
@@ -528,6 +367,6 @@ if __name__=="__main__":
     - 'de'          differential evolution
     - 'reinforce'   reinforce
     """
-    keynames = ['cma']
+    keynames = ['sa']
     
     test_run(*keynames)

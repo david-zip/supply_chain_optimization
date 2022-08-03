@@ -8,9 +8,10 @@ import multiprocessing
 import numpy as np
 from functools import partial
 
-from functions.timer import timeit
+from algorithms.optim import OptimClass
+from helper_functions.timer import timeit
 
-class Simulated_Annealing():
+class Simulated_Annealing(OptimClass):
 
     def __init__(self, model, env, **kwargs):
         """
@@ -145,7 +146,7 @@ class Simulated_Annealing():
         """
         pass
 
-class Parallelized_Simulated_Annealing():
+class Parallelized_Simulated_Annealing(OptimClass):
 
     def __init__(self, model, env, **kwargs):
         """

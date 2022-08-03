@@ -7,11 +7,12 @@ import torch
 import warnings
 import numpy as np
 
-from functions.timer import timeit
+from algorithms.optim import OptimClass
+from helper_functions.timer import timeit
 
 warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
-class Gaussian_Evolutionary_Strategy():
+class Gaussian_Evolutionary_Strategy(OptimClass):
 
     def __init__(self, model, env, **kwargs):
         """
@@ -177,7 +178,7 @@ class Gaussian_Evolutionary_Strategy():
         
         return self.best_parameters, self.best_reward, self.reward_list
 
-class Covariance_Matrix_Adaption_Evolutionary_Strategy():
+class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
     
     def __init__(self, model, env, **kwargs):
         """
@@ -481,7 +482,7 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy():
         
         return self.best_parameters, self.best_reward, self.reward_list
 
-class Natural_Evolutionary_Strategy():
+class Natural_Evolutionary_Strategy(OptimClass):
     
     def __init__(self, model, env, **kwargs):
         """

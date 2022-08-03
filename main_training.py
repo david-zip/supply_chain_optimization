@@ -502,7 +502,7 @@ def train(maxIter=50, *args):
 
         print("GES training finished")
 
-### DIFFERENTIAL EVOLUTION ###
+    ### DIFFERENTIAL EVOLUTION ###
     if 'de' in args:
         # initialise environment
         SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)

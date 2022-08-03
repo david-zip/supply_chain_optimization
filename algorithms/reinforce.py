@@ -38,4 +38,3 @@ def reinforce(policy_net, rewards, orders, GAMMA, LEARNING_RATE):
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
-    

@@ -2,13 +2,13 @@
 Differential evolution for neural net optimization
 """
 import copy
-from matplotlib import tri
 import torch
 import numpy as np
 
-from functions.timer import timeit
+from algorithms.optim import OptimClass
+from helper_functions.timer import timeit
 
-class Differential_Evolution():
+class Differential_Evolution(OptimClass):
 
     def __init__(self, model, env, **kwargs):
         """
@@ -130,7 +130,7 @@ class Differential_Evolution():
         # update fitness solution
         self.model.load_state_dict(self.parameters[i])
         self.fitness[i] = function(self.env, SC_run_params, self.model)
-    
+
     @timeit
     def algorithm(self, function: any, SC_run_params: dict, iter_debug: bool = False):
         """

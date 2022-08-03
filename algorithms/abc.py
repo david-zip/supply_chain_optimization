@@ -5,9 +5,10 @@ import copy
 import torch
 import numpy as np
 
-from functions.timer import timeit
+from algorithms.optim import OptimClass
+from helper_functions.timer import timeit
 
-class Artificial_Bee_Colony():
+class Artificial_Bee_Colony(OptimClass):
 
     def __init__(self, model, env, **kwargs):
         """
@@ -240,6 +241,3 @@ class Artificial_Bee_Colony():
                 print(f'{niter}')
 
         return self.best_parameters, self.best_reward, self.reward_list
-
-if __name__=="__main__":
-    pass
