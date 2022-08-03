@@ -287,6 +287,8 @@ class Parallelized_Simulated_Annealing():
             # share list between all workers
             self.best_value = manager.list(self.best_value)
             self.best_parameters = manager.list(self.best_parameters)
+            
+            # limit number of workers to 5 at a time
             pool = multiprocessing.Pool(5)
             best_rewards_list = list(pool.map(partial(self._run_parallel, \
                                     function=function, SC_run_params=SC_run_params, \
@@ -294,12 +296,14 @@ class Parallelized_Simulated_Annealing():
                                     iter_debug=iter_debug),
                                 range(self.population)))
 
+            # create reward list based on all the workers
             for i in range(self.maxiter):
                 best = []
                 for j in range(self.population):
                     best.append(best_rewards_list[j][i])
                 self.final_rewards.append(max(best))
 
+            # determine worker with best reward and parameters
             best_index = np.argmax(self.best_value)
 
             best_reward = max(self.best_value)

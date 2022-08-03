@@ -2,6 +2,7 @@
 Evolutionary strategy for neural net optimization
 """
 import copy
+import math
 import torch
 import warnings
 import numpy as np
@@ -185,10 +186,8 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy():
         - model                =   class       # neural network
         - env                  =   class       # supply chain environment
         - kwargs['bounds']     =   [lb, ub]    # parameter bounds
-        - kwargs['population'] =   20          # population size
         - kwargs['mean']       =   0           # initial mean
         - kwargs['step_size']  =   3           # initial step_size
-        - kwargs['elite_cut']  =   0.4         # percent of population in elite set
         - kwargs['maxiter']    =   1000        # maximum number of iterations
         """
         # unpack the arguments
@@ -212,34 +211,65 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy():
 
         # store algorithm hyper-parameters
         self.population     = int(4 + np.floor(3 * np.log(self.search_space)))
-        self.elite_cut      = self.args['elite_cut']
+        self.elite_size     = self.population // 2
         self.mean           = torch.full(size=[self.search_space, 1], fill_value=self.args['mean'], dtype=torch.float)
         self.mean_old       = torch.full(size=[self.search_space, 1], fill_value=self.args['mean'], dtype=torch.float)
         self.step_size      = self.args['step_size']
-        self.weights        = 1. / (int(self.population * self.elite_cut))
-        self.mu_weights     = 1. / sum([self.weights**2 for i in range(int(self.population * self.elite_cut))])
-        # initialize learning rates (# are these parameters too small? #)
-        self.lr_mean    = self.mu_weights / self.search_space**2    
-        self.lr_ss      = 4. / self.search_space
-        self.lr_cmep    = 4. / self.search_space    # the same as above?
-        self.lr_cmup    = min(1., ((self.population * self.elite_cut) / self.search_space**2))
-        self.lr_one     = 2. / self.search_space**2
-        self.damping    = 1. + np.sqrt(self.mu_weights / self.search_space)
+
+        # weights initialization
+        weights_prime       = torch.tensor([math.log((self.population + 1) / 2) - math.log(i + 1) \
+                                                for i in range(self.elite_size)])
+        self.mu_eff         = (torch.sum(weights_prime[:self.elite_size]).pow(2)) / \
+                                torch.sum(weights_prime[:self.elite_size]).pow(2)
+        self.mu_eff_minus   = (torch.sum(weights_prime[self.elite_size:]).pow(2)) / \
+                                torch.sum(weights_prime[self.elite_size:].pow(2))
+        # learning rate initialization
+        # rank-one update learning rate
+        alpha_cov = 2
+        self.c1   = alpha_cov / ((self.search_space + 1.3) ** 2 + self.mu_eff)
+
+        # rank min(lambda, mu) update learning rate
+        self.cmu  = min(1 - self.c1 - 1e-8,
+                        alpha_cov * (self.mu_eff - +1 /self.mu_eff) / \
+                        ((self.search_space + 2) ** 2 + alpha_cov * self.mu_eff / 2))
+        min_alpha = min(1 + self.c1 / self.cmu,
+                        1 + (2 * self.mu_eff_minus) / (self.mu_eff + 2),
+                        (1 - self.c1 - self.cmu) / (self.search_space * self.cmu))
+        
+        positive_sum = torch.sum(weights_prime[[weights_prime > 0]])
+        negative_sum = torch.sum(torch.abs(weights_prime[[weights_prime < 0]]))
+
+        self.weights = torch.where(weights_prime >= 0,
+                                    1 / positive_sum * weights_prime,
+                                    min_alpha / negative_sum * weights_prime).tolist()
+        
+        # mean learning rate
+        self.cm = 1
+
+        # step-size evolution path learning eate
+        self.c_sigma = (self.mu_eff + 2) / (self.search_space + self.mu_eff + 5)
+        self.damping = 1 + 2 * max(0, math.sqrt((self.mu_eff - 1) / (self.search_space + 1)) - 1) + self.c_sigma
+
+        # covariance evolution path learning rate
+        self.cc = (4 + self.mu_eff / self.search_space) / \
+                    (self.search_space + 4 + 2 * self.mu_eff /self.search_space)
+        
+        # estimate E||N(0,I)||
+        self.chi_n = math.sqrt(self.search_space) \
+                        * (1. - (1. / (4. * self.search_space)) \
+                        + (1. / (21. * self.search_space ** 2)))
 
         # create covariance matrix and evolution path matrices
-        #self.D              = torch.ones(self.search_space, 1, dtype=torch.float)
-        #self.B              = torch.eye(self.search_space, self.search_space)
         self.C              = torch.eye(self.search_space)
-        #self.invsqrtC       = self.B * torch.diag(self.D.pow(-1)) * self.B.t()
         self.evolution_step = torch.zeros(self.search_space, 1)
         self.evolution_cov  = torch.zeros(self.search_space, 1)
 
         # creating list
-        self.parameters    = []
-        self.samples       = []
-        self.rewards       = []
-        self.elite_set     = []
-        self.elite_samples = []
+        self.parameters     = []
+        self.samples        = []
+        self.rewards        = []
+        self.elite_set      = []
+        self.elite_samples  = []
 
         # initialise global best
         self.best_parameters  = copy.deepcopy(self.params)
@@ -290,15 +320,14 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy():
         self.samples    = [self.samples[i] for i in order]
 
         # added best solutiouns to elite set
-        self.elite_set     = self.parameters[:int(self.population*self.elite_cut)]
-        self.elite_samples = self.samples[:int(self.population*self.elite_cut)]
-
-        print(self.rewards)
+        self.elite_set     = self.parameters[:self.elite_size]
+        self.elite_samples = self.samples[:self.elite_size]
 
     def _sample_parameters(self, function, SC_run_params):
         """
         Sample new parameters using an updated covariance matrix
         """
+        self.rewards.clear()
         for i in range(self.population):
 
             # generate random solutions                
@@ -330,19 +359,21 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy():
         Update algorithm mean
         """
         # initialize mean update list
-        mean_update = self.weights * torch.stack(self.elite_samples).sum(dim=0)
-            
+        test = []
+        for i in range(self.elite_size):
+            test.append(self.weights[i] * self.elite_samples[i])
+        mean_update = (torch.stack(test)).sum(dim=0)
         # update the mean
         self.mean_old = self.mean
-        self.mean     = mean_update
+        self.mean     = self.mean + self.cm * mean_update
 
     def _update_step_size_evolution_path(self):
         """
         Step size evolution path is updated using polyak averaging
         """ 
         # calculate pervious contribution and new contribution
-        initial_cont = (1 - self.lr_ss) * self.evolution_step
-        sqrt_scalar  = (self.lr_ss * (2 - self.lr_ss) * self.mu_weights)**(1/2)
+        initial_cont = (1 - self.c_sigma) * self.evolution_step
+        sqrt_scalar  = (self.c_sigma * (2 - self.c_sigma) * self.mu_eff)**(1/2)
         sqrt_cont    = torch.mul(sqrt_scalar, self.invsqrtC)
         final_cont   = (self.mean - self.mean_old) / self.step_size
 
@@ -354,8 +385,8 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy():
         Covaiance evolution path is updated using polyak averaging
         """
         # calculate pervious contribution and new contribution
-        initial_cont = (1 - self.lr_cmep) * self.evolution_cov
-        sqrt_scalar  = (self.lr_cmep * (2 - self.lr_cmep) * self.mu_weights)**(1/2)
+        initial_cont = (1 - self.cc) * self.evolution_cov
+        sqrt_scalar  = (self.cc * (2 - self.cc) * self.mu_eff)**(1/2)
         final_cont   = (self.mean - self.mean_old) / self.step_size
 
         # update covariance evolution path
@@ -367,11 +398,9 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy():
         and the expectation of the norm of a normal distribution N(0, I)
         """
         # calculate inside exponential first
-        exp_norm   = np.sqrt(self.search_space) * (1 - (1/(4*self.search_space)) + (1/(21*(self.search_space**2))))
-        
-        ratio      = torch.linalg.norm(self.evolution_step) / exp_norm
+        ratio      = torch.linalg.norm(self.evolution_step) / self.chi_n
                         
-        inside_exp = (self.lr_ss / self.damping) * (ratio - 1)
+        inside_exp = (self.c_sigma / self.damping) * (ratio - 1)
 
         # update step size
         self.step_size *= torch.exp(inside_exp)
@@ -383,19 +412,21 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy():
         - Rank-one update           :   estimates the moving steps and the sign information from history
         """
         # initial update
-        initial_cont = (1 - self.lr_cmup - self.lr_one) * self.C
+        initial_cont = (1 - self.cmu - self.c1) * self.C
 
         # rank-one update
-        rank_one = self.lr_one * torch.mul(self.evolution_cov, self.evolution_cov.t())
+        rank_one = self.c1 * torch.mul(self.evolution_cov, self.evolution_cov.t())
 
         # rank-min(lambda, n) update
         # get sum of all samples   
 
         # sample all parameters and convert to column tensor
-        yi         = (torch.stack(self.elite_samples).sum(dim=0) - self.mean) / self.step_size
-        print(yi)
+        test = []
+        for i in range(self.elite_size):
+            test.append(self.weights[i] * self.elite_samples[i])
+        yi         = (torch.stack(test).sum(dim=0) - self.mean) / self.step_size
         sample_sum = yi * yi.t()
-        rank_min   = self.lr_cmup * self.weights * sample_sum
+        rank_min   = self.cmu *  sample_sum
 
         # update covariance
         self.C = torch.add(initial_cont, torch.add(rank_one, rank_min))
@@ -407,9 +438,6 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy():
         # calculate B and D (eigen decomposition)
         self.C = (self.C + self.C.t()) / 2
         self.D, self.B = torch.linalg.eigh(self.C)
-        
-        self.B = self.B.float()
-        self.D = self.D.float()
 
         # D is a vector of standard deviations
         self.D = torch.sqrt(self.D)

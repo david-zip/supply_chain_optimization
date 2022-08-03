@@ -528,6 +528,6 @@ if __name__=="__main__":
     - 'de'          differential evolution
     - 'reinforce'   reinforce
     """
-    keynames = ['psa']
+    keynames = ['cma']
     
     test_run(*keynames)

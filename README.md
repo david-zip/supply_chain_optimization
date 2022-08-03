@@ -10,4 +10,4 @@
 - implement CMA-ES
 - implement differential evolution :)
 - implement NES (optional)
-- add parallelisation to SA
+- add parallelisation to SA :)
