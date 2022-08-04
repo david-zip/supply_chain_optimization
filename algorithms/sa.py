@@ -148,7 +148,7 @@ class Simulated_Annealing(OptimClass):
 
 class Parallelized_Simulated_Annealing(OptimClass):
 
-    def __init__(self, model, env, **kwargs):
+    def __init__(self, model, env, echelons, SC_params, hyparams, **kwargs):
         """
         Initialize algorithm hyper-parameters
 
@@ -162,8 +162,13 @@ class Parallelized_Simulated_Annealing(OptimClass):
         - kwargs['maxtime']     =   100         # maximum run time in seconds (IMPLEMENT LATER)
         """
         # unpack the arguments
-        self.model      = model                 # neural network
-        self.env        = env                   # environment 
+        self.model = []; self.env = []
+        for i in range(kwargs['population']):
+            self.model.append(model(**hyparams))
+            self.env.append(env(echelons, SC_params))
+
+        #self.model      = model                 # neural network
+        #self.env        = env                   # environment 
         self.args       = kwargs
 
         # store model parameters

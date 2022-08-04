@@ -1,7 +1,5 @@
 """
 Main file to evaluate the model performance
-
-Improve this using abstract class
 """
 import torch
 import numpy as np
@@ -9,7 +7,7 @@ import matplotlib.pyplot as plt
 
 from environment import Multi_echelon_SupplyChain
 from neural_nets.model_ssa import Net
-from functions.demand import random_uniform_demand_si, seasonal_random_uniform_control_si
+from helper_functions.demand import random_uniform_demand_si, seasonal_random_uniform_control_si
 
 def evaluate(**kwargs):
 
@@ -22,7 +20,7 @@ def evaluate(**kwargs):
         # define SC parameters (siso - ORIGINAL)
         SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
                         'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
-                        'material_cost':{1:12}, 'product_cost':{1:100}}
+                        'material_cost':{0:12}, 'product_cost':{0:100}}
 
     n_echelons_ = kwargs["echelons"]
 
@@ -94,7 +92,7 @@ def evaluate(**kwargs):
     backlog = 0
     # main loop
     for step_k in range(steps_tot):
-        d_k_                           = random_uniform_demand_si(demand_lb, demand_ub)
+        d_k_                           = seasonal_random_uniform_control_si(demand_lb, demand_ub, step_k)
         demand_history[step_k]         = d_k_
         d_k                            = d_k_ + backlog
         sale_product, r_k, backlog     = SC_model.advance_supply_chain_orders(order_k, d_k)
@@ -155,6 +153,6 @@ if __name__=="__main__":
     keywords = {}
     keywords['io']       = 'siso'
     keywords['echelons'] = 2
-    keywords['path']     = 'neural_nets/parameters/test/cma.pth'
+    keywords['path']     = 'neural_nets/parameters/test/ga.pth'
 
     evaluate(**keywords)

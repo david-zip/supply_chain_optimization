@@ -281,7 +281,7 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         """
         Initialize random starting parameters using Normal distribution
         """
-        for i in range(self.population):
+        for _ in range(self.population):
 
             # generate random solutions
             new_params = {}
@@ -320,6 +320,8 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         self.parameters = [self.parameters[i] for i in order]
         self.samples    = [self.samples[i] for i in order]
 
+        print(self.rewards)
+
         # added best solutiouns to elite set
         self.elite_set     = self.parameters[:self.elite_size]
         self.elite_samples = self.samples[:self.elite_size]
@@ -328,7 +330,6 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         """
         Sample new parameters using an updated covariance matrix
         """
-        self.rewards.clear()
         for i in range(self.population):
 
             # generate random solutions                
@@ -363,19 +364,25 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         test = []
         for i in range(self.elite_size):
             test.append(self.weights[i] * self.elite_samples[i])
-        mean_update = (torch.stack(test)).sum(dim=0)
+        mean_update = torch.stack(test).sum(dim=0)
+        print(mean_update)
         # update the mean
         self.mean_old = self.mean
-        self.mean     = self.mean + self.cm * mean_update
+        self.mean     = self.mean + self.cm * self.step_size * mean_update
 
     def _update_step_size_evolution_path(self):
         """
         Step size evolution path is updated using polyak averaging
         """ 
         # calculate pervious contribution and new contribution
+        self.invsqrtC = self.B * torch.diag(1/self.D) * self.B.t()
         initial_cont = (1 - self.c_sigma) * self.evolution_step
         sqrt_scalar  = (self.c_sigma * (2 - self.c_sigma) * self.mu_eff)**(1/2)
-        sqrt_cont    = torch.mul(sqrt_scalar, self.invsqrtC)
+        test = []
+        for i in range(self.elite_size):
+            test.append(self.weights[i] * self.elite_samples[i])
+        test2 = torch.stack(test).sum(dim=0)
+        sqrt_cont    = torch.mul(sqrt_scalar, torch.mul(self.invsqrtC, test2))
         final_cont   = (self.mean - self.mean_old) / self.step_size
 
         # update step size evolution path
@@ -388,7 +395,11 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         # calculate pervious contribution and new contribution
         initial_cont = (1 - self.cc) * self.evolution_cov
         sqrt_scalar  = (self.cc * (2 - self.cc) * self.mu_eff)**(1/2)
-        final_cont   = (self.mean - self.mean_old) / self.step_size
+        test = []
+        for i in range(self.elite_size):
+            test.append(self.weights[i] * self.elite_samples[i])
+        #final_cont   = (self.mean - self.mean_old) / self.step_size
+        final_cont = torch.stack(test).sum(dim=0)
 
         # update covariance evolution path
         self.evolution_cov = torch.add(initial_cont, torch.mul(sqrt_scalar, final_cont))
@@ -441,10 +452,10 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         self.D, self.B = torch.linalg.eigh(self.C)
 
         # D is a vector of standard deviations
-        self.D = torch.sqrt(self.D)
+        self.D = torch.sqrt(torch.where(self.D < 0., torch.zeros(self.D.shape), self.D))
 
         # calculate invsqrtC
-        self.invsqrtC = self.B * torch.diag(self.D.pow(-1) * self.B.t())
+        self.invsqrtC = self.B * torch.diag(1/self.D) * self.B.t()
 
     @timeit
     def algorithm(self, function: any, SC_run_params: dict, iter_debug: bool = False):

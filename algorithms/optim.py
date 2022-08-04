@@ -4,7 +4,6 @@ Abstract class for all algorithms
 from abc import ABC, abstractmethod
 
 class OptimClass(ABC):
-    
 
     def __init__():
         pass

@@ -282,7 +282,4 @@ class Genetic_Algorithm(OptimClass):
             if niter % 10 == 0 and iter_debug == True:
                 print(f'{niter}')
             
-        return self.best_parameters, self.best_gene_fitness, self.reward_list, self.best_gene
-
-if __name__=="__main__":
-    pass
+        return self.best_parameters, self.best_gene_fitness, self.reward_list

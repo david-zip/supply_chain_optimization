@@ -36,7 +36,7 @@ class Multi_echelon_SupplyChain:
         # constructing supply chain inventory (QUESTION)
         self.wt_list = [SC_params['echelon_prod_wt'][ii][0] for ii in range(n_echelons)]
         self.wt_std  = [SC_params['echelon_prod_wt'][ii][1] for ii in range(n_echelons)]
-        self.max_wt  = max(self.wt_list)
+        self.max_wt  = max([self.wt_list[ii] + self.wt_std[ii] for ii in range(n_echelons)])
         SC_inventory = np.zeros((n_echelons, self.max_wt + 1))   # (echelon, prod_wt + storage)
 
         # make inventory self    
@@ -90,7 +90,8 @@ class Multi_echelon_SupplyChain:
         '''
         # Confusion about what a wt_list is. Is it a list of delivery times or something else? (QUESTION)
         echelon_prod_wt          = self.SC_params['echelon_prod_wt'] # waiting times for production for each echelon
-        wt_list                  = [self.wt_list[ii] + self.wt_std[ii] * np.random.randint(-1, 1) for ii in range(self.n_echelons)]
+        wt_list                  = [self.wt_list[i] + self.wt_std[i] * np.random.randint(-1, 1) \
+                                        for i in range(self.n_echelons)]    # adds stochasticity to the waiting time
         n_echelons               = self.n_echelons
         self.time_k             += 1
     
@@ -150,14 +151,14 @@ class Multi_echelon_SupplyChain:
         demand     : how many sales where asked for.
         '''
         # Is the penalty only for the second product? (QUESTION)
-        demand_penalty = self.SC_params['product_cost'][1] * 0.5 # you loose 50% extra for late product
+        demand_penalty = self.SC_params['product_cost'][0] * 0.5 # you loose 50% extra for late product
 
         # check if not all demand was met
         demand_diff    = max(0, demand - orders_u[-1])
         # raw material costs 
-        raw_mat_cost   = self.SC_params['material_cost'][1]*orders_u[0]
+        raw_mat_cost   = self.SC_params['material_cost'][0]*orders_u[0]
         # production gains
-        product_gain   = self.SC_params['product_cost'][1] *orders_u[-1]
+        product_gain   = self.SC_params['product_cost'][0] *orders_u[-1]
         # inventory - storage cost
         storage_cost   = sum([self.SC_params['echelon_storage_cost'][ii]*
                               self.SC_inventory[ii][0] for ii in range(self.n_echelons)])

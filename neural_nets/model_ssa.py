@@ -17,21 +17,27 @@ class Net(nn.Module):
     # defining ANN topology 
     self.input_size = self.args['input_size']
     self.output_sz  = self.args['output_size']
-    self.hs1        = int(self.input_size*2)              # !! parameters change manually
-    self.hs2        = self.input_size + self.output_sz    # !! parameters change manually
-    self.hs3        = self.output_sz*2                    # !! parameter  change manually
+    self.hs1        = int(self.input_size*2)                # !! parameters change manually
+    self.hs2        = self.input_size + self.output_sz      # !! parameters change manually
+    self.hs3        = self.output_sz*2                      # !! parameters change manually
+    self.hs4        = self.output_sz**2                     # !! parameters change manually
+    self.hs5        = self.output_sz // 2 * self.input_size # !! parameters change manually
 
     # defining layer 
-    self.hidden1 = nn.Linear(self.input_size, self.hs1 )
+    self.hidden1 = nn.Linear(self.input_size, self.hs1)
     self.hidden2 = nn.Linear(self.hs1, self.hs2)
     self.hidden3 = nn.Linear(self.hs2, self.hs3)
-    self.output  = nn.Linear(self.hs3, self.output_sz)
+    self.hidden4 = nn.Linear(self.hs3, self.hs4)
+    self.hidden5 = nn.Linear(self.hs4, self.hs5)
+    self.output  = nn.Linear(self.hs5, self.output_sz)
 
   def forward(self, x):
-    x           = torch.tensor(x.view(1,1,-1)).float()
+    x           = x.view(1,1,-1).clone().detach().float()
     y           = F.leaky_relu(self.hidden1(x), 0.1)
     y           = F.leaky_relu(self.hidden2(y), 0.1)
-    y           = F.leaky_relu(self.hidden3(y))            
+    y           = F.leaky_relu(self.hidden3(y), 0.1)
+    y           = F.leaky_relu(self.hidden4(y), 0.1)
+    y           = F.leaky_relu(self.hidden5(y), 0.1)
     y           = F.relu6(self.output(y))                 # range (0,6)
     y           = y.detach().numpy()
 
