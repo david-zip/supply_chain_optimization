@@ -18,8 +18,8 @@ def evaluate(**kwargs):
                         'material_cost':{0:12, 1:13, 2:11}, 'product_cost':{0:100, 1:300}}
     else:   # call siso parameters
         # define SC parameters (siso - ORIGINAL)
-        SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
-                        'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
+        SC_params_ = {'echelon_storage_cost':(5/2,10/2,7/2,8/2), 'echelon_storage_cap' :(20,7,10,6),
+                        'echelon_prod_cost' :(0,0,0,0), 'echelon_prod_wt' :((5,1),(7,1),(9,1),(11,3)),
                         'material_cost':{0:12}, 'product_cost':{0:100}}
 
     n_echelons_ = kwargs["echelons"]
@@ -30,11 +30,12 @@ def evaluate(**kwargs):
 
     # policy hyperparameters
     hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                    'output_size': 2}
+                    'output_size': n_echelons_}
 
     # state and control actions
-    u_norm_   = np.array([[20/6, 20/6], [0, 0]]);  # here I am assuming entry-wise normalisation
-    x_norm_   = np.array([10, 10]);                # here I am assuming equal normalisation for all state entries
+    u_norm_   = np.array([[20/6 for _ in range(n_echelons_)], 
+                            [0 for _ in range(n_echelons_)]]) 
+    x_norm_   = np.array([10 for _ in range(n_echelons_)])
 
     # run parameters
     SC_run_params_ = {}
@@ -92,7 +93,7 @@ def evaluate(**kwargs):
     backlog = 0
     # main loop
     for step_k in range(steps_tot):
-        d_k_                           = seasonal_random_uniform_control_si(demand_lb, demand_ub, step_k)
+        d_k_                           = random_uniform_demand_si(demand_lb, demand_ub)
         demand_history[step_k]         = d_k_
         d_k                            = d_k_ + backlog
         sale_product, r_k, backlog     = SC_model.advance_supply_chain_orders(order_k, d_k)
@@ -153,6 +154,6 @@ if __name__=="__main__":
     keywords = {}
     keywords['io']       = 'siso'
     keywords['echelons'] = 2
-    keywords['path']     = 'neural_nets/parameters/test/ga.pth'
+    keywords['path']     = 'neural_nets/parameters/test/sa.pth'
 
     evaluate(**keywords)

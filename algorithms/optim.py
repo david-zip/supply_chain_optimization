@@ -5,9 +5,10 @@ from abc import ABC, abstractmethod
 
 class OptimClass(ABC):
 
-    def __init__():
+    @abstractmethod
+    def algorithm(self, function, SC_run_params, iter_debug):
         pass
 
     @abstractmethod
-    def algorithm(self, function, SC_run_params, iter_debub):
+    def func_algorithm(self, function, SC_run_params, func_call_max, iter_debug):
         pass

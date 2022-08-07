@@ -61,7 +61,7 @@ class Gaussian_Evolutionary_Strategy(OptimClass):
         """
         Initialize random starting positions
         """
-        for i in range(self.population):
+        for _ in range(self.population):
 
             # generate random solutions
             new_params = {}
@@ -177,9 +177,23 @@ class Gaussian_Evolutionary_Strategy(OptimClass):
                 print(f'{niter}')
         
         return self.best_parameters, self.best_reward, self.reward_list
+    
+    @timeit
+    def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
+                        iter_debug: bool = False):
+        """
+        Simulated annealling algorithm
+        Will terminate after a given number of maximum function calls
+        
+        - function      =   J_supply_chain function (ssa verion)
+        - SC_run_params =   J_supply_chain run parameters
+        - func_call_max =   maximum number of function calls (default; 10000)
+        - iter_debug    =   if true, prints ever 1000 function calls
+        """
+        pass
 
 class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
-    
+
     def __init__(self, model, env, **kwargs):
         """
         Initialize algorithm hyper-parameter 
@@ -213,13 +227,13 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         # store algorithm hyper-parameters
         self.population     = int(4 + np.floor(3 * np.log(self.search_space)))
         self.elite_size     = self.population // 2
-        self.mean           = torch.full(size=[self.search_space, 1], fill_value=self.args['mean'], dtype=torch.float)
-        self.mean_old       = torch.full(size=[self.search_space, 1], fill_value=self.args['mean'], dtype=torch.float)
+        self.mean           = torch.full(size=[1, self.search_space], fill_value=self.args['mean'], dtype=torch.float)
+        self.mean_old       = torch.full(size=[1, self.search_space], fill_value=self.args['mean'], dtype=torch.float)
         self.step_size      = self.args['step_size']
 
         # weights initialization
         weights_prime       = torch.tensor([math.log((self.population + 1) / 2) - math.log(i + 1) \
-                                                for i in range(self.elite_size)])
+                                                for i in range(self.population)])
         self.mu_eff         = (torch.sum(weights_prime[:self.elite_size]).pow(2)) / \
                                 torch.sum(weights_prime[:self.elite_size]).pow(2)
         self.mu_eff_minus   = (torch.sum(weights_prime[self.elite_size:]).pow(2)) / \
@@ -236,14 +250,14 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         min_alpha = min(1 + self.c1 / self.cmu,
                         1 + (2 * self.mu_eff_minus) / (self.mu_eff + 2),
                         (1 - self.c1 - self.cmu) / (self.search_space * self.cmu))
-        
+
         positive_sum = torch.sum(weights_prime[[weights_prime > 0]])
         negative_sum = torch.sum(torch.abs(weights_prime[[weights_prime < 0]]))
 
         self.weights = torch.where(weights_prime >= 0,
                                     1 / positive_sum * weights_prime,
                                     min_alpha / negative_sum * weights_prime).tolist()
-        
+
         # mean learning rate
         self.cm = 1
 
@@ -254,7 +268,7 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         # covariance evolution path learning rate
         self.cc = (4 + self.mu_eff / self.search_space) / \
                     (self.search_space + 4 + 2 * self.mu_eff /self.search_space)
-        
+
         # estimate E||N(0,I)||
         self.chi_n = math.sqrt(self.search_space) \
                         * (1. - (1. / (4. * self.search_space)) \
@@ -262,8 +276,8 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
 
         # create covariance matrix and evolution path matrices
         self.C              = torch.eye(self.search_space)
-        self.evolution_step = torch.zeros(self.search_space, 1)
-        self.evolution_cov  = torch.zeros(self.search_space, 1)
+        self.evolution_step = torch.zeros(1, self.search_space)
+        self.evolution_cov  = torch.zeros(1, self.search_space)
 
         # creating list
         self.parameters     = []
@@ -288,7 +302,7 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
             for key, value in self.params.items():
                 new_params[key] = torch.randn(value.shape) * (self.ub - self.lb) + self.lb
             self.parameters.append(new_params)
-            self.samples.append(torch.randn(self.search_space, 1))
+            self.samples.append(torch.randn(1, self.search_space))
 
             # calculate parameter reward
             self.model.load_state_dict(new_params)
@@ -334,19 +348,19 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
 
             # generate random solutions                
             # sample using covariance matrix and estimate solutions
-            self.samples[i] = self.mean + self.step_size * \
-                                self.B * (torch.diag(self.D) * torch.randn(self.search_space, 1))
+            self.samples[i] = torch.diagonal(self.mean + self.step_size * \
+                                self.B * (self.D * torch.randn(1, self.search_space)))
 
             # enusure bounds are not breached                                    
             self.samples[i] = torch.clamp(self.samples[i], min=self.lb, max=self.ub)
             solutions       = self.samples[i].unsqueeze(-1).tolist()
             
             index = 0
-            for key, value in self.parameters[i].items():                   # loop through keys of parameters            
+            for _, value in self.parameters[i].items():                   # loop through keys of parameters            
                 for tensor in value:                                        # loop through tensors in parameter dictionary
                     tensor = tensor.unsqueeze(-1)
                     for j in range(len(tensor)):                            # iterate through every parameter
-                        tensor[j] = torch.tensor(solutions[index][0][0], 
+                        tensor[j] = torch.tensor(solutions[index][0], 
                                                     dtype=torch.float)
 
                         index += 1
@@ -365,7 +379,6 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         for i in range(self.elite_size):
             test.append(self.weights[i] * self.elite_samples[i])
         mean_update = torch.stack(test).sum(dim=0)
-        print(mean_update)
         # update the mean
         self.mean_old = self.mean
         self.mean     = self.mean + self.cm * self.step_size * mean_update
@@ -386,7 +399,7 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         final_cont   = (self.mean - self.mean_old) / self.step_size
 
         # update step size evolution path
-        self.evolution_step = torch.add(initial_cont, torch.mul(sqrt_cont, final_cont))
+        self.evolution_step = torch.diagonal(torch.add(initial_cont, torch.mul(sqrt_cont, final_cont)))
 
     def _update_covariance_evolution_path(self):
         """
@@ -396,10 +409,10 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         initial_cont = (1 - self.cc) * self.evolution_cov
         sqrt_scalar  = (self.cc * (2 - self.cc) * self.mu_eff)**(1/2)
         test = []
-        for i in range(self.elite_size):
-            test.append(self.weights[i] * self.elite_samples[i])
-        #final_cont   = (self.mean - self.mean_old) / self.step_size
-        final_cont = torch.stack(test).sum(dim=0)
+        #for i in range(self.elite_size):
+        #    test.append(self.weights[i] * self.elite_samples[i])
+        final_cont   = (self.mean - self.mean_old) / self.step_size
+        #final_cont = torch.stack(test).sum(dim=0)
 
         # update covariance evolution path
         self.evolution_cov = torch.add(initial_cont, torch.mul(sqrt_scalar, final_cont))
@@ -452,7 +465,7 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         self.D, self.B = torch.linalg.eigh(self.C)
 
         # D is a vector of standard deviations
-        self.D = torch.sqrt(torch.where(self.D < 0., torch.zeros(self.D.shape), self.D))
+        self.D = self.D.sqrt()
 
         # calculate invsqrtC
         self.invsqrtC = self.B * torch.diag(1/self.D) * self.B.t()
@@ -493,6 +506,21 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         
         return self.best_parameters, self.best_reward, self.reward_list
 
+    @timeit
+    def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
+                        iter_debug: bool = False):
+        """
+        Simulated annealling algorithm
+        Will terminate after a given number of maximum function calls
+        
+        - function      =   J_supply_chain function (ssa verion)
+        - SC_run_params =   J_supply_chain run parameters
+        - func_call_max =   maximum number of function calls (default; 10000)
+        - iter_debug    =   if true, prints ever 1000 function calls
+        """
+        pass
+
+
 class Natural_Evolutionary_Strategy(OptimClass):
     
     def __init__(self, model, env, **kwargs):
@@ -512,3 +540,9 @@ class Natural_Evolutionary_Strategy(OptimClass):
         self.model      = model                     # neural network
         self.env        = env                       # environment 
         self.args       = kwargs
+
+    def algorithm(self, function, SC_run_params, iter_debug):
+        return super().algorithm(function, SC_run_params, iter_debug)
+    
+    def func_algorithm(self, function, SC_run_params, func_call_max, iter_debug):
+        return super().func_algorithm(function, SC_run_params, func_call_max, iter_debug)

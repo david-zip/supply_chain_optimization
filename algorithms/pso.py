@@ -185,5 +185,16 @@ class Particle_Swarm_Optimization(OptimClass):
         
         return self.gbest_parameters, self.gbest_reward, self.gbest_reward_list
 
-if __name__=="__main__":
-    pass
+    @timeit
+    def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
+                        iter_debug: bool = False):
+        """
+        Simulated annealling algorithm
+        Will terminate after a given number of maximum function calls
+        
+        - function      =   J_supply_chain function (ssa verion)
+        - SC_run_params =   J_supply_chain run parameters
+        - func_call_max =   maximum number of function calls (default; 10000)
+        - iter_debug    =   if true, prints ever 1000 function calls
+        """
+        pass

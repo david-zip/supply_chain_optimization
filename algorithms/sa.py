@@ -2,6 +2,7 @@
 Simulated annealing for neural net optimization
 """
 import copy
+import time
 import torch
 import warnings
 import multiprocessing
@@ -50,6 +51,10 @@ class Simulated_Annealing(OptimClass):
         # initialise list for algorithm
         self.best_rewards       = []                # best reward after every episode
         self.current_reward     = -1e8
+        
+        # set max function call for benchmarking
+        self.func_call = 0
+        self.func_call_reward = []
 
     def _initialize(self, function, SC_run_params):
         """
@@ -63,8 +68,6 @@ class Simulated_Annealing(OptimClass):
         self.Ti     = self.Ti0
         self.Tf     = self.Tf0
         self.T      = self.Ti0
-
-        return self.best_value, self.best_parameters
 
     def _neighbourhood_search(self):
         """
@@ -90,13 +93,13 @@ class Simulated_Annealing(OptimClass):
         """
         # identify best solution
         if self.current_reward > self.best_value:
-            self.best_parameters = self.params
+            self.best_parameters = copy.deepcopy(self.params)
             self.best_value = self.current_reward
         else:
             # metropolis acceptance probability
             r = np.random.uniform()
             if r > np.exp((self.best_value - self.current_reward)/self.T):
-                self.best_parameters = self.params
+                self.best_parameters = copy.deepcopy(self.params)
                 self.best_value = self.current_reward
 
     def _cooling_schedule(self):
@@ -138,13 +141,43 @@ class Simulated_Annealing(OptimClass):
 
         return self.best_parameters, self.best_value, self.best_rewards
     
-    def time_algorithm(self, f: any, print_output: bool = True):
+    @timeit
+    def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
+                        iter_debug: bool = False):
         """
         Simulated annealling algorithm
-
-        ### IMPLEMENT LATER ###
+        Will terminate after a given number of maximum function calls
+        
+        - function      =   J_supply_chain function (ssa verion)
+        - SC_run_params =   J_supply_chain run parameters
+        - func_call_max =   maximum number of function calls (default; 10000)
+        - iter_debug    =   if true, prints ever 1000 function calls
         """
-        pass
+        # suppress warnings
+        warnings.filterwarnings('ignore')
+
+        # reinitialize exponential decay
+        self.eps = 1 - (self.Tf0/self.Ti0)**(func_call_max**(-1))
+
+        # initialize solutions
+        self._initialize(function, SC_run_params)
+
+        # start algorithm
+        while self.func_call <= func_call_max:
+            self._neighbourhood_search()
+            self._run_trajectory(function, SC_run_params)
+            self._find_best()
+            self._cooling_schedule()
+
+            # store values in a list    
+            self.func_call_reward.append(self.best_value)
+
+            # iteration counter
+            self.func_call += 1
+            if self.func_call % 1000 == 0 and iter_debug == True:
+                print(f'{self.func_call}')
+
+        return self.best_parameters, self.best_value, self.func_call_reward
 
 class Parallelized_Simulated_Annealing(OptimClass):
 
@@ -194,6 +227,8 @@ class Parallelized_Simulated_Annealing(OptimClass):
         self.best_rewards       = [[] for _ in range(self.population)]
         self.current_reward     = [-1e8 for _ in range(self.population)]
         self.final_rewards      = []
+        self.func_call          = 0
+        self.func_call_reward   = []
 
         self.seeds = [np.random.randint(0, 2**32) for _ in range(self.population)]
 
@@ -316,11 +351,80 @@ class Parallelized_Simulated_Annealing(OptimClass):
             best_params = self.best_parameters[best_index]
 
         return best_params, best_reward, self.final_rewards
+
+    def _run_parallel_func(self, i, function, SC_run_params, func_call, func_call_max, 
+                            rew_list, param_list, iter_debug):
+        """
+        Run algorothm task in parallel; represents the task of each population
+        """
+        # suppress warnings
+        warnings.filterwarnings('ignore')
+
+        reward_list = []
+        while sum(self.func_call) < func_call_max:
+            self._neighbourhood_search(i)
+            self._run_trajectory(function[i], SC_run_params, i)
+            self._find_best(i)
+            self._cooling_schedule(i)
+
+            # store values in a list    
+            reward_list.append(self.best_value[i])
+
+            self.func_call_reward.append(max(self.best_value))
+
+            # iteration counter
+            self.func_call[i] += 1
+            if sum(self.func_call) % 1000 == 0 and iter_debug == True:
+                print(f'{self.func_call}')
+
+        return reward_list
     
-    def time_algorithm(self, f: any, print_output: bool = True):
+    @timeit
+    def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
+                        iter_debug: bool = False):
         """
         Simulated annealling algorithm
+        Will terminate after a given number of maximum function calls
 
-        ### IMPLEMENT LATER ###
+        - function      =   J_supply_chain function (ssa verion)
+        - SC_run_params =   J_supply_chain run parameters
+        - func_call_max =   maximum number of function calls (default: 10000)
+        - iter_debug    =   if true, prints ever 1000 function calls
         """
-        pass
+        function = [function for _ in range(self.population)]
+
+        # reinitialize exponential decay
+        self.eps = 1 - (self.Tf0/self.Ti0)**(func_call_max**(-1))
+
+        # initialize solutions
+        self._initialize(function, SC_run_params)
+
+        # start algorithm for multiple population
+        with multiprocessing.Manager() as manager:
+
+            # share list between all workers
+            self.best_value         = manager.list(self.best_value)
+            self.best_parameters    = manager.list(self.best_parameters)
+            self.func_call_reward   = manager.list(self.func_call_reward)
+            self.func_call          = manager.list([0, 0, 0, 0, 0])
+
+            # limit number of workers to 5 at a time
+            pool = multiprocessing.Pool(5)
+            best_rewards_list = list(pool.map(partial(self._run_parallel_func,
+                                                function=function, SC_run_params=SC_run_params,
+                                                func_call=self.func_call, func_call_max=func_call_max,
+                                                rew_list=self.best_value, param_list=self.best_parameters, 
+                                                iter_debug=iter_debug),
+                                        range(self.population)))
+
+            time.sleep(10)
+
+            # determine worker with best reward and parameters
+            best_index = np.argmax(self.best_value)
+
+            best_reward = max(self.best_value)
+            best_params = self.best_parameters[best_index]
+
+            print(len(self.func_call_reward))
+
+        return best_params, best_reward, self.func_call_reward

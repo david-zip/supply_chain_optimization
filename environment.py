@@ -2,10 +2,8 @@ import copy
 import numpy as np
 
 
-class Multi_echelon_SupplyChain:
-    ###########################
-    # --- initializing SC --- #
-    ###########################    
+class Multi_echelon_SupplyChain():
+
     def __init__(self, n_echelons, SC_params, connectivity_M='none', reward_f='none'):
         '''
         Input parameters:
@@ -42,12 +40,10 @@ class Multi_echelon_SupplyChain:
         # make inventory self    
         self.SC_inventory = SC_inventory
         self.warehouses   = self.SC_inventory[:,0]
-        
-    ######################################
-    # --- original advance SC orders --- #
-    ######################################
+
     def advance_supply_chain_orders(self, orders, demand):
         '''
+        Original advance SC orders
         orders: np.array([raw_material=>eche_1, eche_1=>eche_2, ... , eche_n=>sale]) array of number of orders (integer value) in each echelon
         '''
         # Confusion about what a wt_list is. Is it a list of delivery times or something else? (QUESTION)
@@ -66,11 +62,11 @@ class Multi_echelon_SupplyChain:
             for i_eche in range(n_echelons):
                 self.SC_inventory[i_eche, wt_list[i_eche]] += orders_called[i_eche]   # Add to the current storage what we are ordering (COMMENT)
                 self.SC_inventory[i_eche, 0]               -= orders_called[i_eche+1] # Remove from the current echelon what we are ordering in the next (COMMENT)
-            # advance all orders by 1 (what's going on - comment // move a batch of orders down the line until it becomes a demand, shift the next batch order)
+            # advance all orders by 1 // move a batch of orders down the line until it becomes a demand, shift the next batch order)
             for i_eche in range(n_echelons):
                 shift_plus                       = copy.deepcopy(self.SC_inventory[i_eche, 1:])
                 self.SC_inventory[i_eche, 0:-1] += copy.deepcopy(shift_plus[:])
-                self.SC_inventory[i_eche, 1:]   -= copy.deepcopy(shift_plus[:]) # Does this not equal to 0? (QUESTION)
+                self.SC_inventory[i_eche, 1:]   -= copy.deepcopy(shift_plus[:])
             # sale orders - What is leaving the system (COMMENT)
             sale_product = orders_called[-1]
             # update reward
@@ -106,7 +102,7 @@ class Multi_echelon_SupplyChain:
             for i_eche in range(n_echelons):
                 self.SC_inventory[i_eche, wt_list[i_eche]] += orders_called[i_eche]   # Add to the current storage what we are ordering (COMMENT)
                 self.SC_inventory[i_eche, 0]               -= orders_called[i_eche+1] # Remove from the current echelon what we are ordering in the next (COMMENT)
-            # advance all orders by 1 (what's going on - comment // move a batch of orders down the line until it becomes a demand, shift the next batch order)
+            # advance all orders to the left by 1 (what's going on - comment // move a batch of orders down the line until it becomes a demand, shift the next batch order)
             for i_eche in range(n_echelons):
                 shift_plus                       = copy.deepcopy(self.SC_inventory[i_eche, 1:])
                 self.SC_inventory[i_eche, 0:-1] += copy.deepcopy(shift_plus[:])
@@ -140,9 +136,6 @@ class Multi_echelon_SupplyChain:
         # return state
         return SC_state
 
-    ################################
-    # --- siso reward function --- #
-    ################################
     def supply_chain_reward_siso(self, orders_u, demand):
         '''
         reward for single raw material and single product
@@ -176,10 +169,7 @@ class Multi_echelon_SupplyChain:
         self.product_tot = np.sum(self.SC_inventory)
         # update warehouse values
         self.warehouses   = self.SC_inventory[:,0]
-    
-    ################################
-    # --- mimo reward function --- #
-    ################################
+
     def supply_chain_reward_mimo(self, orders_u, demand):
         '''
         reward for (eventually) multiple raw materials and multiple products
@@ -191,7 +181,6 @@ class Multi_echelon_SupplyChain:
         for i in range(len(self.SC_params['product_cost'])):
             demand_penalty += self.SC_params['product_cost'][i] * 0.5           # you loose 50% extra for late product
             product_gain   += self.SC_params['product_cost'][i] * orders_u[-1]  # production gains
-
         
         raw_mat_cost = 0
         for i in range(len(self.SC_params['material_cost'])):

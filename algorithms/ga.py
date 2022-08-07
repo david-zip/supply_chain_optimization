@@ -283,3 +283,17 @@ class Genetic_Algorithm(OptimClass):
                 print(f'{niter}')
             
         return self.best_parameters, self.best_gene_fitness, self.reward_list
+
+    @timeit
+    def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
+                        iter_debug: bool = False):
+        """
+        Simulated annealling algorithm
+        Will terminate after a given number of maximum function calls
+        
+        - function      =   J_supply_chain function (ssa verion)
+        - SC_run_params =   J_supply_chain run parameters
+        - func_call_max =   maximum number of function calls (default; 10000)
+        - iter_debug    =   if true, prints ever 1000 function calls
+        """
+        pass
