@@ -62,12 +62,16 @@ class Particle_Swarm_Optimization(OptimClass):
         self.gbest_reward       = 0
         self.gbest_reward_list  = []
 
+        # initialize function call counter and reward list
+        self.func_call          = 0
+        self.func_call_reward   = []
+
     def _initialize(self, function, SC_run_params):
         """
         Initialize random starting positions and velocities
         """
         for i in range(self.population):
-    
+
             velocity = {}
             for key, value in self.params.items():
                 
@@ -98,23 +102,22 @@ class Particle_Swarm_Optimization(OptimClass):
         self.gbest_reward       = max(self.particle_rewards)
         self.gbest_parameters   = copy.deepcopy(self.particle_parameters[self.particle_rewards.index(self.gbest_reward)])
 
-    def _find_best(self):
+    def _find_best(self, i):
         """
         Determine personal and global best
         """
         # determine personal best
-        for i in range(self.population):
-            if self.particle_rewards[i] > self.pbest_rewards[i]:
-                # replace previous personal best
-                self.pbest_parameters[i]    = copy.deepcopy(self.particle_parameters[i])
-                self.pbest_rewards[i]       = self.particle_rewards[i]
+        if self.particle_rewards[i] > self.pbest_rewards[i]:
+            # replace previous personal best
+            self.pbest_parameters[i]    = copy.deepcopy(self.particle_parameters[i])
+            self.pbest_rewards[i]       = self.particle_rewards[i]
 
         # determine global best of the current iteration
-        max_reward = max(self.pbest_rewards)
+        max_reward_index = np.argmax(self.pbest_rewards)
 
-        if max_reward > self.gbest_reward:
-            self.gbest_reward       = max_reward
-            self.gbest_parameters   = copy.deepcopy(self.particle_parameters[self.particle_rewards.index(self.gbest_reward)])
+        if self.pbest_rewards[max_reward_index] > self.gbest_reward:
+            self.gbest_reward       = self.pbest_rewards[max_reward_index]
+            self.gbest_parameters   = copy.deepcopy(self.pbest_parameters[max_reward_index])
 
     def _update(self, function, SC_run_params):
         """
@@ -146,6 +149,13 @@ class Particle_Swarm_Optimization(OptimClass):
             self.model.load_state_dict(self.particle_parameters[i])
             new_reward = function(self.env, SC_run_params, self.model)
             self.particle_rewards[i] = new_reward
+            
+            # find best solution
+            self._find_best(i)
+
+            # step function call counter and store best reward
+            self.func_call += 1
+            self.func_call_reward.append(self.gbest_reward)
 
     def _weight_decay(self, niter):
         """
@@ -173,7 +183,6 @@ class Particle_Swarm_Optimization(OptimClass):
         while niter < self.maxiter:
             self._weight_decay(niter)
             self._update(function, SC_run_params)
-            self._find_best()
 
             # Store value in a list
             self.gbest_reward_list.append(self.gbest_reward)
@@ -197,4 +206,16 @@ class Particle_Swarm_Optimization(OptimClass):
         - func_call_max =   maximum number of function calls (default; 10000)
         - iter_debug    =   if true, prints ever 1000 function calls
         """
-        pass
+        # initialize solutions
+        self._initialize(function, SC_run_params)
+
+        # start algorithm
+        while self.func_call < func_call_max:
+            self._weight_decay(self.func_call)
+            self._update(function, SC_run_params)
+
+            # iter_debug
+            if self.func_call % 1000 == 0 and iter_debug == True:
+                print(f'{self.func_call}')
+        
+        return self.gbest_parameters, self.gbest_reward, self.func_call_reward

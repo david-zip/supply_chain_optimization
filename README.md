@@ -15,3 +15,4 @@
 create a an abstract class
 define an abstract method so they all have the same arguments
 - can store in an array 
+- create a requirements.txt for required packages

@@ -377,7 +377,7 @@ class Parallelized_Simulated_Annealing(OptimClass):
             if sum(self.func_call) % 1000 == 0 and iter_debug == True:
                 print(f'{self.func_call}')
 
-        return reward_list
+        return self.func_call_reward
     
     @timeit
     def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
@@ -406,7 +406,7 @@ class Parallelized_Simulated_Annealing(OptimClass):
             self.best_value         = manager.list(self.best_value)
             self.best_parameters    = manager.list(self.best_parameters)
             self.func_call_reward   = manager.list(self.func_call_reward)
-            self.func_call          = manager.list([0, 0, 0, 0, 0])
+            self.func_call          = manager.list([0 for _ in range(self.population)])
 
             # limit number of workers to 5 at a time
             pool = multiprocessing.Pool(5)
@@ -416,15 +416,16 @@ class Parallelized_Simulated_Annealing(OptimClass):
                                                 rew_list=self.best_value, param_list=self.best_parameters, 
                                                 iter_debug=iter_debug),
                                         range(self.population)))
+            pool.terminate()
 
-            time.sleep(10)
-
+            R_list = []
+            for i in range(len(self.func_call_reward)):
+                R_list.append(self.func_call_reward[i])
+            
             # determine worker with best reward and parameters
             best_index = np.argmax(self.best_value)
 
             best_reward = max(self.best_value)
             best_params = self.best_parameters[best_index]
 
-            print(len(self.func_call_reward))
-
-        return best_params, best_reward, self.func_call_reward
+            return best_params, best_reward, R_list

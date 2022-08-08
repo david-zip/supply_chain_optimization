@@ -140,7 +140,7 @@ def test_run(args):
     for arg in args:
         best_policy, best_reward, R_list = algo_dict[arg].func_algorithm(function=J_supply_chain_ssa, 
                                                                             SC_run_params=SC_run_params_, 
-                                                                            func_call_max=10000, 
+                                                                            func_call_max=5000, 
                                                                             iter_debug=True
                                                                         )
 
@@ -167,6 +167,6 @@ if __name__=="__main__":
     - 'cma'         covariance matrix adaptation evolutionary strategy
     - 'de'          differential evolution
     """
-    keynames = ['psa']
+    keynames = ['pso']
     
     test_run(keynames)

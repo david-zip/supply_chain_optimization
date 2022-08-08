@@ -46,16 +46,16 @@ def test_run(args):
     n_echelons_ = 2
 
         # state and control actions
-    u_norm_   = np.array([[20/6 for _ in range(n_echelons_)], 
-                            [0 for _ in range(n_echelons_)]]) 
-    x_norm_   = np.array([10 for _ in range(n_echelons_)])
+    u_norm_   = np.array([[20/6 for _ in range(n_echelons_ * len(SC_params_['product_cost']))],
+                            [0 for _ in range(n_echelons_ * len(SC_params_['product_cost']))]])
+    x_norm_   = np.array([10 for _ in range(n_echelons_ * len(SC_params_['product_cost']))])
 
     ### INITIALIZE ENVIRONMENT ###
     SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
     # policy hyperparameters
     hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                    'output_size': n_echelons_}
+                    'output_size': n_echelons_ * len(SC_params_['product_cost'])}
 
     # initialise neural net 
     policy_net = Net(**hyparams_)
@@ -138,7 +138,9 @@ def test_run(args):
     }
 
     for arg in args:
-        best_policy, best_reward, R_list = algo_dict[arg].algorithm(function=J_supply_chain_ssa, SC_run_params=SC_run_params_, iter_debug=True)
+        best_policy, best_reward, R_list = algo_dict[arg].algorithm(function=J_supply_chain_ssa, 
+                                                                        SC_run_params=SC_run_params_, 
+                                                                        iter_debug=True)
 
         print(best_reward)
 
@@ -163,6 +165,6 @@ if __name__=="__main__":
     - 'cma'         covariance matrix adaptation evolutionary strategy
     - 'de'          differential evolution
     """
-    keynames = ['cma']
+    keynames = ['psa']
     
     test_run(keynames)

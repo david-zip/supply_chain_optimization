@@ -35,11 +35,16 @@ class Multi_echelon_SupplyChain():
         self.wt_list = [SC_params['echelon_prod_wt'][ii][0] for ii in range(n_echelons)]
         self.wt_std  = [SC_params['echelon_prod_wt'][ii][1] for ii in range(n_echelons)]
         self.max_wt  = max([self.wt_list[ii] + self.wt_std[ii] for ii in range(n_echelons)])
-        SC_inventory = np.zeros((n_echelons, self.max_wt + 1))   # (echelon, prod_wt + storage)
+        SC_inventory_ = np.array(
+                                    [np.random.random((len(self.SC_params['product_cost']), self.max_wt + 1)) \
+                                    for _ in range(self.n_echelons)]
+                                )   # (echelon, prod_wt + storage)
 
-        # make inventory self    
-        self.SC_inventory = SC_inventory
-        self.warehouses   = self.SC_inventory[:,0]
+        # make inventory self
+        self.SC_inventory = SC_inventory_
+        print(SC_inventory_)
+        self.warehouses   = self.SC_inventory[:,:,0]
+        print(self.warehouses)
 
     def advance_supply_chain_orders(self, orders, demand):
         '''
@@ -55,6 +60,7 @@ class Multi_echelon_SupplyChain():
             # minimum between orders and stored capacity
             # (QUESTION) is orders the input of raw material into the system, and the demand the output of products from the system?
             orders_called     = orders
+            print(orders)
             orders_called[1:] = np.minimum(self.SC_inventory[:-1,0], orders[1:])  # notice first order is from raw material ('infinite')
             sales_orders      = np.minimum(self.SC_inventory[-1,0],demand)        # you cannot sell more than the demand
             orders_called     = np.hstack((orders_called,sales_orders))
