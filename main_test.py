@@ -29,7 +29,6 @@ def test_run(args):
     """
     ### INITIALISE PARAMETERS ###
     # define SC parameters (siso - ORIGINAL)
-    
     SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
                     'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
                     'material_cost':{0:12}, 'product_cost':{0:100}}
@@ -38,7 +37,7 @@ def test_run(args):
     SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
                     'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
                     'material_cost':{0:12, 1:13, 2:11}, 'product_cost':{0:100, 1:300}}
-    
+
     SC_params_ = {'echelon_storage_cost':(5/2,10/2,7/2,8/2), 'echelon_storage_cap' :(20,7,10,6),
                     'echelon_prod_cost' :(0,0,0,0), 'echelon_prod_wt' :((5,1),(7,1),(9,1),(11,3)),
                     'material_cost':{0:12}, 'product_cost':{0:100}}
@@ -165,6 +164,6 @@ if __name__=="__main__":
     - 'cma'         covariance matrix adaptation evolutionary strategy
     - 'de'          differential evolution
     """
-    keynames = ['psa']
+    keynames = ['de']
     
     test_run(keynames)

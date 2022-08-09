@@ -198,7 +198,7 @@ class Parallelized_Simulated_Annealing(OptimClass):
         self.model = []; self.env = []
         for i in range(kwargs['population']):
             self.model.append(model(**hyparams))
-            self.env.append(env(echelons, SC_params))
+            #self.env.append(env(echelons, SC_params))
 
         #self.model      = model                 # neural network
         #self.env        = env                   # environment 
