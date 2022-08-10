@@ -57,6 +57,10 @@ class Gaussian_Evolutionary_Strategy(OptimClass):
         self.best_reward      = -1e8
         self.reward_list      = []
 
+        # initialize function call counter and reward list
+        self.func_call          = 0
+        self.func_call_reward   = []
+
     def _initialize(self, function, SC_run_params):
         """
         Initialize random starting positions
@@ -131,17 +135,20 @@ class Gaussian_Evolutionary_Strategy(OptimClass):
             total_reward = function(self.env, SC_run_params, self.model)
             self.rewards.append(total_reward)
 
-    def _find_best(self):
+            self._find_best(i)
+
+            # iterate function call counter and store best reward
+            self.func_call += 1
+            self.func_call_reward.append(self.best_reward)
+
+    def _find_best(self, i):
         """
         Finds best solution and stores it
         """
-        # determines the best solution
-        maximum_reward = max(self.rewards)
-
         # replaces best parameters found so far if better
-        if maximum_reward > self.best_reward:
-            self.best_reward     = maximum_reward
-            self.best_parameters = copy.deepcopy(self.parameters[self.rewards.index(maximum_reward)])
+        if self.rewards[i] > self.best_reward:
+            self.best_reward     = self.rewards[i]
+            self.best_parameters = copy.deepcopy(self.parameters[i])
 
     @timeit
     def algorithm(self, function: any, SC_run_params: dict, iter_debug: bool = False):
@@ -164,10 +171,9 @@ class Gaussian_Evolutionary_Strategy(OptimClass):
             self._elite_set()                                   # generate elite set
             self._update_mean_std()                             # update mean and std
             self._update_parametrs(function, SC_run_params)     # generate new parameters
-            self._find_best()                                   # determine best parameters
             
             # clear elite set for next iteration
-            self.elite_set.clear()              
+            self.elite_set.clear()
 
             # store current best into list
             self.reward_list.append(self.best_reward)
@@ -178,6 +184,12 @@ class Gaussian_Evolutionary_Strategy(OptimClass):
         
         return self.best_parameters, self.best_reward, self.reward_list
     
+    def reinitialize(self):
+        """
+        Reinitialize class to original state
+        """
+        self.__init__(self.model, self.env, **self.args)
+
     @timeit
     def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
                         iter_debug: bool = False):
@@ -190,7 +202,22 @@ class Gaussian_Evolutionary_Strategy(OptimClass):
         - func_call_max =   maximum number of function calls (default; 10000)
         - iter_debug    =   if true, prints ever 1000 function calls
         """
-        pass
+        # initialize algorithm
+        self._initialize(function, SC_run_params)
+
+        # start algorithm
+        while self.func_call < func_call_max:
+            self._elite_set()                                   # generate elite set
+            self._update_mean_std()                             # update mean and std
+            self._update_parametrs(function, SC_run_params)     # generate new parameters
+            
+            # clear elite set for next iteration
+            self.elite_set.clear()              
+
+            if self.func_call % 1000 == 0 and iter_debug is True:
+                print(f'{self.func_call}')
+        
+        return self.best_parameters, self.best_reward, self.func_call_reward
 
 class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
 
@@ -295,7 +322,7 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         """
         Initialize random starting parameters using Normal distribution
         """
-        for _ in range(self.population):
+        for i in range(self.population):
 
             # generate random solutions
             new_params = {}
@@ -309,20 +336,17 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
             total_reward = function(self.env, SC_run_params, self.model)
             self.rewards.append(total_reward)
 
-        # determine best solution
-        self._find_best()
+            # determine best solution
+            self._find_best(i)
 
-    def _find_best(self):
+    def _find_best(self, i):
         """
         Finds best solution and stores it
         """
-        # determines the best solution
-        maximum_reward = max(self.rewards)
-
         # replaces best parameters found so far if better
-        if maximum_reward > self.best_reward:
-            self.best_reward     = maximum_reward
-            self.best_parameters = copy.deepcopy(self.parameters[self.rewards.index(maximum_reward)])
+        if self.rewards[i] > self.best_reward:
+            self.best_reward     = self.rewards[i]
+            self.best_parameters = copy.deepcopy(self.parameters[i])
 
     def _elite_set(self):
         """
@@ -333,8 +357,6 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         self.rewards    = [self.rewards[i] for i in order]
         self.parameters = [self.parameters[i] for i in order]
         self.samples    = [self.samples[i] for i in order]
-
-        print(self.rewards)
 
         # added best solutiouns to elite set
         self.elite_set     = self.parameters[:self.elite_size]
@@ -369,6 +391,9 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
             self.model.load_state_dict(self.parameters[i])
             total_reward    = function(self.env, SC_run_params, self.model)
             self.rewards[i] = total_reward
+
+            # iterate function call and store best reward
+            self.fun
 
     def _update_mean(self):
         """
@@ -506,6 +531,9 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         
         return self.best_parameters, self.best_reward, self.reward_list
 
+    def reinitialize(self):
+        return super().reinitialize()
+
     @timeit
     def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
                         iter_debug: bool = False):
@@ -519,7 +547,6 @@ class Covariance_Matrix_Adaption_Evolutionary_Strategy(OptimClass):
         - iter_debug    =   if true, prints ever 1000 function calls
         """
         pass
-
 
 class Natural_Evolutionary_Strategy(OptimClass):
     
@@ -544,5 +571,8 @@ class Natural_Evolutionary_Strategy(OptimClass):
     def algorithm(self, function, SC_run_params, iter_debug):
         return super().algorithm(function, SC_run_params, iter_debug)
     
+    def reinitialize(self):
+        return super().reinitialize()
+
     def func_algorithm(self, function, SC_run_params, func_call_max, iter_debug):
         return super().func_algorithm(function, SC_run_params, func_call_max, iter_debug)

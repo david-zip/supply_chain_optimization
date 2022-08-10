@@ -154,6 +154,6 @@ if __name__=="__main__":
     keywords = {}
     keywords['io']       = 'siso'
     keywords['echelons'] = 2
-    keywords['path']     = 'neural_nets/parameters/test/sa.pth'
+    keywords['path']     = 'neural_nets/parameters/test/pso.pth'
 
     evaluate(**keywords)

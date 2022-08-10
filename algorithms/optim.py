@@ -10,5 +10,9 @@ class OptimClass(ABC):
         pass
 
     @abstractmethod
+    def reinitialize(self):
+        pass
+
+    @abstractmethod
     def func_algorithm(self, function, SC_run_params, func_call_max, iter_debug):
         pass

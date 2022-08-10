@@ -141,6 +141,12 @@ class Simulated_Annealing(OptimClass):
 
         return self.best_parameters, self.best_value, self.best_rewards
     
+    def reinitialize(self):
+        """
+        Reinitialize class to original state
+        """
+        self.__init__(self.model, self.env, **self.args)
+    
     @timeit
     def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
                         iter_debug: bool = False):
@@ -201,6 +207,8 @@ class Parallelized_Simulated_Annealing(OptimClass):
             self.env.append(env(echelons, SC_params))
 
         self.args       = kwargs
+
+        self.inputs     = [model, env, echelons, SC_params, hyparams, kwargs]
 
         # store model parameters
         self.params     = self.model[0].state_dict()   # inital parameter values
@@ -376,7 +384,14 @@ class Parallelized_Simulated_Annealing(OptimClass):
                 print(f'{self.func_call}')
 
         return self.func_call_reward
-    
+
+    def reinitialize(self):
+        """
+        Reinitialize class to original state
+        """
+        self.__init__(self.inputs[0], self.inputs[1], self.inputs[2], 
+                        self.inputs[3], self.inputs[4], **self.inputs[5])
+
     @timeit
     def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
                         iter_debug: bool = False):

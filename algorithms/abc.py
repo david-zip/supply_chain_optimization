@@ -49,6 +49,10 @@ class Artificial_Bee_Colony(OptimClass):
         self.best_parameters  = copy.deepcopy(self.params)
         self.best_reward      = -1e8
         self.reward_list      = []
+        
+        # initialize function call counter and reward list
+        self.func_call          = 0
+        self.func_call_reward   = []
 
     def _initialize(self, function, SC_run_params):
         """
@@ -66,8 +70,8 @@ class Artificial_Bee_Colony(OptimClass):
             total_reward = function(self.env, SC_run_params, self.model)
             self.bee_rewards.append(total_reward)
         
-        # initialize best solution and value
-        self._find_best()
+            # initialize best solution and value
+            self._find_best(i)
     
     def _replace_bee_best(self, new_params, new_reward, i):
         """
@@ -165,17 +169,14 @@ class Artificial_Bee_Colony(OptimClass):
         # Restarts abandon counter
         self.abandoned[i] = 0
 
-    def _find_best(self):
+    def _find_best(self, i):
         """
         Finds best solution and stores it
         """
-        # determines best solution
-        maximum_reward = max(self.bee_rewards)
-
         # replaces best parameters found so far if better
-        if maximum_reward > self.best_reward:
-            self.best_reward     = maximum_reward
-            self.best_parameters = copy.deepcopy(self.bee_parameters[self.bee_rewards.index(maximum_reward)])
+        if self.bee_rewards[i] > self.best_reward:
+            self.best_reward     = self.bee_rewards[i]
+            self.best_parameters = copy.deepcopy(self.bee_parameters[i])
     
     @timeit
     def algorithm(self, function: any, SC_run_params: dict, iter_debug: bool = False):
@@ -229,8 +230,8 @@ class Artificial_Bee_Colony(OptimClass):
                 if self.abandoned[i] > 5:
                     self._scout_bee(function, SC_run_params, i)
 
-            # Determines best solution found
-            self._find_best()
+                # Determines best solution found
+                self._find_best(i)
 
             # Stores best solution found in each iteration
             self.reward_list.append(self.best_reward)
@@ -241,6 +242,12 @@ class Artificial_Bee_Colony(OptimClass):
                 print(f'{niter}')
 
         return self.best_parameters, self.best_reward, self.reward_list
+
+    def reinitialize(self):
+        """
+        Reinitialize class to original state
+        """
+        self.__init__(self.model, self.env, **self.args)
 
     @timeit
     def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
@@ -254,4 +261,54 @@ class Artificial_Bee_Colony(OptimClass):
         - func_call_max =   maximum number of function calls (default; 10000)
         - iter_debug    =   if true, prints ever 1000 function calls
         """
-        pass
+        # initialize algorithm
+        self._initialize(function, SC_run_params)
+
+        # start algorithm
+        while self.func_call < func_call_max:
+            for i in range(self.population):
+                
+                # employed bee
+                new_params, new_reward = self._employed_bee(function, SC_run_params, i)
+                self._replace_bee_best(new_params, new_reward, i)
+
+                # generate and store solution probability
+                # determine minimum reward
+                min_reward = min(self.bee_rewards)
+
+                shifted_rewards = []
+                if min_reward < 0:
+                    # if minimum reward is negative, shift all rewards to be positive
+                    for j in range(len(self.bee_rewards)):
+                        bee_reward = self.bee_rewards[j] + min_reward * -1
+                        shifted_rewards.append(bee_reward)
+                else:
+                    # otherwise do nothing
+                    shifted_rewards = self.bee_rewards
+
+                solution_prob = float(self.bee_rewards[i] / sum(shifted_rewards))
+
+                # roulette wheel selection
+                random_prob = np.random.uniform(0, 1/(self.population))
+                if random_prob < solution_prob:
+
+                    # onlooker bee
+                    new_params, new_reward = self._onlooker_bee(function, SC_run_params, i)
+                    self._replace_bee_best(new_params, new_reward, i)
+
+                # scout bee
+                if self.abandoned[i] > 5:
+                    self._scout_bee(function, SC_run_params, i)
+
+                # Determines best solution found
+                self._find_best(i)
+
+                # iterate function call counter and store best solution
+                self.func_call += 1
+                self.func_call_reward.append(self.best_reward)
+
+                if self.func_call % 1000 == 0 and iter_debug == True:
+                    print(f'{self.func_call}')
+
+        return self.best_parameters, self.best_reward, self.func_call_reward
+

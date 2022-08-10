@@ -73,7 +73,7 @@ def test_run(args):
     SC_run_params_['x_norm']     = x_norm_
     SC_run_params_['hyparams']   = hyparams_
 
-    # definig algo hyperparams
+    # defining algo hyperparams
     SA_params_ = {}
     SA_params_['bounds']        = [-5, 5]
     SA_params_['temp']          = [1.0, 0.1]
@@ -167,6 +167,6 @@ if __name__=="__main__":
     - 'cma'         covariance matrix adaptation evolutionary strategy
     - 'de'          differential evolution
     """
-    keynames = ['sa','pso']
+    keynames = ['abc']
     
     test_run(keynames)

@@ -55,6 +55,10 @@ class Differential_Evolution(OptimClass):
         self.best_fitness    = -1e8
         self.fitness_list     = []
 
+        # initialize function call counter and reward list
+        self.func_call          = 0
+        self.func_call_reward   = []
+
     def _initialize(self, function, SC_run_params):
         """
         Initialize aglorithm by generate a set of random solutions
@@ -79,20 +83,17 @@ class Differential_Evolution(OptimClass):
             fitness = function(self.env, SC_run_params, self.model)
             self.fitness.append(fitness)
         
-        # initialize best gene
-        self._find_best()
+            # initialize best gene
+            self._find_best(i)
 
-    def _find_best(self):
+    def _find_best(self, i):
         """
         Finds best solution and stores it
         """
-        # determines the best solution
-        maximum_fitness = max(self.fitness)
-
         # replaces best parameters found so far if better
-        if maximum_fitness > self.best_fitness:
-            self.best_fitness     = maximum_fitness
-            self.best_parameters = copy.deepcopy(self.parameters[self.fitness.index(maximum_fitness)])
+        if self.fitness[i] > self.best_fitness:
+            self.best_fitness    = self.fitness[i]
+            self.best_parameters = copy.deepcopy(self.parameters[i])
 
     def _mutation(self, a, b, c):
         """
@@ -156,7 +157,9 @@ class Differential_Evolution(OptimClass):
                 indexes    = np.random.choice(candidates, 3, replace=False)
                 
                 # choose three tensors
-                a = self.solutions[indexes[0]]; b = self.solutions[indexes[1]]; c = self.solutions[indexes[2]]
+                a = self.solutions[indexes[0]]
+                b = self.solutions[indexes[1]]
+                c = self.solutions[indexes[2]]
 
                 # mutation operator
                 mutated = self._mutation(a, b, c)
@@ -166,10 +169,9 @@ class Differential_Evolution(OptimClass):
 
                 # update parameters
                 self._update_parameters(trial, function, SC_run_params, i)
-                
 
                 # find fittest solution
-                self._find_best()
+                self._find_best(i)
         
                 self.fitness_list.append(self.best_fitness)           
 
@@ -178,6 +180,12 @@ class Differential_Evolution(OptimClass):
                     print(f'{niter}')
         
         return self.best_parameters, self.best_fitness, self.fitness_list
+
+    def reinitialize(self):
+        """
+        Reinitialize class to original state
+        """
+        self.__init__(self.model, self.env, **self.args)
 
     @timeit
     def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
@@ -191,4 +199,38 @@ class Differential_Evolution(OptimClass):
         - func_call_max =   maximum number of function calls (default; 10000)
         - iter_debug    =   if true, prints ever 1000 function calls
         """
-        pass
+        # initialize algorithm
+        self._initialize(function, SC_run_params)
+
+        while self.func_call < func_call_max:
+            for i in range(self.population):
+
+                # choose three candidates for mutation except current 
+                candidates = [int(candidate) for candidate in range(self.population) if candidate != i]
+                indexes    = np.random.choice(candidates, 3, replace=False)
+                
+                # choose three tensors
+                a = self.solutions[indexes[0]]
+                b = self.solutions[indexes[1]]
+                c = self.solutions[indexes[2]]
+
+                # mutation operator
+                mutated = self._mutation(a, b, c)
+
+                # crossover operator
+                trial = self._crossover(self.solutions[i], mutated)
+
+                # update parameters
+                self._update_parameters(trial, function, SC_run_params, i)
+
+                # find fittest solution
+                self._find_best(i)
+
+                # iterate function call counter and store best solution
+                self.func_call += 1
+                self.func_call_reward.append(self.best_fitness)
+
+                if self.func_call % 1000 == 0 and iter_debug is True:
+                    print(f'{self.func_call}')
+        
+        return self.best_parameters, self.best_fitness, self.func_call_reward

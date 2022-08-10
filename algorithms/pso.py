@@ -77,7 +77,7 @@ class Particle_Swarm_Optimization(OptimClass):
                 
                 # initialize random parameters and velocity
                 self.particle_parameters[i][key] = torch.rand(value.shape) * (self.ub - self.lb) + self.lb
-                velocity[key] = torch.randn(value.shape)
+                velocity[key] = torch.rand(value.shape)
             
             # add initial elocity and parameters to list
             self.particle_velocities.append(velocity)
@@ -97,9 +97,10 @@ class Particle_Swarm_Optimization(OptimClass):
             self.pbest_rewards.append(self.particle_rewards[i])
             self.pbest_parameters.append(copy.deepcopy(self.particle_parameters[i]))
 
+        best_index = np.argmax(self.particle_rewards)
         # initialize global best
-        self.gbest_reward       = max(self.particle_rewards)
-        self.gbest_parameters   = copy.deepcopy(self.particle_parameters[self.particle_rewards.index(self.gbest_reward)])
+        self.gbest_reward       = self.particle_rewards[best_index]
+        self.gbest_parameters   = copy.deepcopy(self.particle_parameters[best_index])
 
     def _find_best(self, i):
         """
@@ -108,14 +109,13 @@ class Particle_Swarm_Optimization(OptimClass):
         # determine personal best
         if self.particle_rewards[i] > self.pbest_rewards[i]:
             # replace previous personal best
-            self.pbest_rewards[i]       = self.particle_rewards[i]
-            self.pbest_parameters[i]    = copy.deepcopy(self.particle_parameters[i])
-
+            self.pbest_rewards[i]    = self.particle_rewards[i]
+            self.pbest_parameters[i] = copy.deepcopy(self.particle_parameters[i])
 
         # determine global best of the current iteration
-        if self.pbest_rewards[i] > self.gbest_reward:
-            self.gbest_reward       = self.pbest_rewards[i]
-            self.gbest_parameters   = copy.deepcopy(self.pbest_parameters[i])
+        if self.particle_rewards[i] > self.gbest_reward:
+            self.gbest_reward       = self.particle_rewards[i]
+            self.gbest_parameters   = copy.deepcopy(self.particle_parameters[i])
 
     def _update(self, function, SC_run_params):
         """
@@ -132,11 +132,11 @@ class Particle_Swarm_Optimization(OptimClass):
                 r2 = (1 - (-1)) * torch.rand(value.shape) + (-1)
 
                 # influence part of update function
-                pbest_pt = self.c1 * torch.mul(r1, (torch.sub(self.pbest_parameters[i][key], self.particle_parameters[i][key])))
-                gbest_pt = self.c2 * torch.mul(r2, (torch.sub(self.gbest_parameters[key], self.particle_parameters[i][key])))
+                pbest_pt = self.c1 * r1 * (self.pbest_parameters[i][key] - self.particle_parameters[i][key])
+                gbest_pt = self.c2 * r2 * (self.gbest_parameters[key] - self.particle_parameters[i][key])
                 
-                self.particle_velocities[i][key]  = torch.add(torch.add(pbest_pt, gbest_pt), self.particle_velocities[i][key], alpha=self.w)
-                self.particle_parameters[i][key]  = torch.add(self.particle_parameters[i][key], self.particle_velocities[i][key])
+                self.particle_velocities[i][key]  = pbest_pt + gbest_pt + self.w * self.particle_velocities[i][key]
+                self.particle_parameters[i][key]  = self.particle_parameters[i][key] + self.particle_velocities[i][key]
 
                 # check if bound constraints have been breached and replace
                 self.particle_parameters[i][key] = torch.clamp(self.particle_parameters[i][key], min=self.lb, max=self.ub)
@@ -189,6 +189,12 @@ class Particle_Swarm_Optimization(OptimClass):
                 print(f'{niter}')
         
         return self.gbest_parameters, self.gbest_reward, self.gbest_reward_list
+
+    def reinitialize(self):
+        """
+        Reinitialize class to original state
+        """
+        self.__init__(self.model, self.env, **self.args)
 
     @timeit
     def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 

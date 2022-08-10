@@ -56,6 +56,10 @@ class Genetic_Algorithm(OptimClass):
         self.best_gene_fitness = -1e8
         self.reward_list       = []
 
+        # initialize function call counter and reward list
+        self.func_call          = 0
+        self.func_call_reward   = []
+
     def _initialize(self, function, SC_run_params):
         """
         Initialize aglorithm, generate random solutions and creates intial genes
@@ -87,8 +91,8 @@ class Genetic_Algorithm(OptimClass):
             fitness = function(self.env, SC_run_params, self.model)
             self.gene_fitness[gene] = fitness
         
-        # initialize best gene
-        self._find_best()
+            # initialize best gene
+            self._find_best(gene)
 
     def _bitstring_to_decimal(self, gene):
         """
@@ -116,16 +120,14 @@ class Genetic_Algorithm(OptimClass):
 
         return decoded
 
-    def _find_best(self):
+    def _find_best(self, gene):
         """
         Determines the best gene and stores it
         """
-        best_gene_in_generation = max(self.gene_fitness, key=self.gene_fitness.get)
-
-        if self.gene_fitness[best_gene_in_generation] > self.best_gene_fitness:
-            self.best_gene         = best_gene_in_generation
-            self.best_gene_fitness = self.gene_fitness[best_gene_in_generation]
-            self.best_parameters   = copy.deepcopy(self.gene_parameters[best_gene_in_generation])
+        if self.gene_fitness[gene] > self.best_gene_fitness:
+            self.best_gene         = gene
+            self.best_gene_fitness = self.gene_fitness[gene]
+            self.best_parameters   = copy.deepcopy(self.gene_parameters[gene])
 
     def _selection(self):
         """
@@ -206,7 +208,7 @@ class Genetic_Algorithm(OptimClass):
 
                 # skip in first loop
                 if niter == 0:
-                    break
+                    break   # why did i do this?
 
                 # determine gene parameters
                 params = self._bitstring_to_decimal(gene)
@@ -225,8 +227,8 @@ class Genetic_Algorithm(OptimClass):
                 fitness = function(self.env, SC_run_params, self.model)
                 self.gene_fitness[gene] = fitness
 
-            # determine the best gene
-            self._find_best()
+                # determine the best gene
+                self._find_best(gene)
 
             # selection operator
             new_gene_pool = []
@@ -284,6 +286,12 @@ class Genetic_Algorithm(OptimClass):
             
         return self.best_parameters, self.best_gene_fitness, self.reward_list
 
+    def reinitialize(self):
+        """
+        Reinitialize class to original state
+        """
+        self.__init__(self.model, self.env, **self.args)
+
     @timeit
     def func_algorithm(self, function: any, SC_run_params: dict, func_call_max: int = 10000, 
                         iter_debug: bool = False):
@@ -296,4 +304,84 @@ class Genetic_Algorithm(OptimClass):
         - func_call_max =   maximum number of function calls (default; 10000)
         - iter_debug    =   if true, prints ever 1000 function calls
         """
-        pass
+        # initialize algorithm
+        self._initialize(function, SC_run_params)
+
+        # start algorithm
+        # loop through generations
+        while self.func_call < func_call_max:
+            for gene in self.gene_pool:
+
+                # determine gene parameters
+                params = self._bitstring_to_decimal(gene)
+                
+                index = 0
+                for key in self.gene_parameters[gene].keys():       # loop through keys of parameters
+                    for tensor in self.gene_parameters[gene][key]:  # loop through tensors in parameter dictionary
+                        tensor = tensor.unsqueeze(-1)
+                        for i in range(len(tensor)):                # iterate through every parameter
+                            tensor[i] = torch.tensor(params[index], 
+                                                        dtype=torch.float)
+                            index += 1
+
+                # calculate gene fitness
+                self.model.load_state_dict(self.gene_parameters[gene])
+                fitness = function(self.env, SC_run_params, self.model)
+                self.gene_fitness[gene] = fitness
+
+                # determine the best gene
+                self._find_best(gene)
+
+                # iterate function call counter and store best solution
+                self.func_call += 1
+                self.func_call_reward.append(self.best_gene_fitness)
+
+            # selection operator
+            new_gene_pool = []
+            for i in range(int(len(self.gene_pool) * self.cut)):
+
+                # tournament selection
+                selected = self._selection()
+                new_gene_pool.append(selected)
+                self.gene_pool.remove(selected)
+
+            # crossover operator
+            for i in range(0, len(new_gene_pool), 2):
+                
+                # select pairs of parents
+                parent1, parent2 = new_gene_pool[i], new_gene_pool[i+1]
+                
+                # single point crossover
+                child1, child2 = self._crossover(parent1, parent2)
+                new_gene_pool.append(child1)
+                new_gene_pool.append(child2)
+
+            # mutation operator
+            for i in range(len(new_gene_pool)):
+                gene = self._mutation(new_gene_pool[i])
+                new_gene_pool[i] = ''.join([str(s) for s in gene])
+            
+            # fill in or remove population if needed
+            if len(new_gene_pool) < self.population:
+                for i in range(len(new_gene_pool), self.population):
+                    gene = np.random.randint(0, 2, self.numbits * self.num_params).tolist()
+                    gene = ''.join([str(s) for s in gene])
+                    new_gene_pool.append(gene)
+
+            elif len(new_gene_pool) > self.population:
+                for i in range(self.population, len(new_gene_pool)):
+                    np.random.shuffle(new_gene_pool)
+                    removed = new_gene_pool.pop(-1)
+            
+            # define new population; clear dictionary list
+            self.gene_pool = new_gene_pool
+            self.gene_parameters.clear()
+            self.gene_fitness.clear()
+
+            for gene in self.gene_pool:
+                self.gene_parameters[gene] = copy.deepcopy(self.best_parameters)
+
+            if self.func_call % 1000 == 0 and iter_debug == True:
+                print(f'{self.func_call}')
+            
+        return self.best_parameters, self.best_gene_fitness, self.func_call_reward
