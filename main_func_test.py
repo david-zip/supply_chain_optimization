@@ -9,10 +9,10 @@ from neural_nets.model_ssa import Net
 from neural_nets.model_reinforce import Net_reinforce
 from environment import Multi_echelon_SupplyChain
 from helper_functions.demand import random_uniform_demand_si, \
-                                seasonal_random_uniform_control_si
+                                    seasonal_random_uniform_control_si
 from helper_functions.trajectory import J_supply_chain_ssa, \
-                                    J_supply_chain_ssa_seasonality, \
-                                    J_supply_chain_reinforce
+                                        J_supply_chain_ssa_seasonality, \
+                                        J_supply_chain_reinforce
 
 from algorithms.sa import Simulated_Annealing, \
                             Parallelized_Simulated_Annealing
@@ -45,9 +45,9 @@ def test_run(args):
     """
     n_echelons_ = 2
 
-        # state and control actions
-    u_norm_   = np.array([[20/6 for _ in range(n_echelons_)], 
-                            [0 for _ in range(n_echelons_)]]) 
+    # state and control actions
+    u_norm_   = np.array([[20/6 for _ in range(n_echelons_)],
+                            [0 for _ in range(n_echelons_)]])
     x_norm_   = np.array([10 for _ in range(n_echelons_)])
 
     ### INITIALIZE ENVIRONMENT ###
@@ -140,7 +140,7 @@ def test_run(args):
     for arg in args:
         best_policy, best_reward, R_list = algo_dict[arg].func_algorithm(function=J_supply_chain_ssa, 
                                                                             SC_run_params=SC_run_params_, 
-                                                                            func_call_max=5000, 
+                                                                            func_call_max=2000, 
                                                                             iter_debug=True
                                                                         )
 
@@ -167,6 +167,6 @@ if __name__=="__main__":
     - 'cma'         covariance matrix adaptation evolutionary strategy
     - 'de'          differential evolution
     """
-    keynames = ['pso']
+    keynames = ['sa','pso']
     
     test_run(keynames)

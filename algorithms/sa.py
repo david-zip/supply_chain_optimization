@@ -146,11 +146,11 @@ class Simulated_Annealing(OptimClass):
                         iter_debug: bool = False):
         """
         Simulated annealling algorithm
-        Will terminate after a given number of maximum function calls
+        Will terminate after a given number of function calls
         
         - function      =   J_supply_chain function (ssa verion)
         - SC_run_params =   J_supply_chain run parameters
-        - func_call_max =   maximum number of function calls (default; 10000)
+        - func_call_max =   maximum number of function calls (default: 10000)
         - iter_debug    =   if true, prints ever 1000 function calls
         """
         # suppress warnings
@@ -196,12 +196,10 @@ class Parallelized_Simulated_Annealing(OptimClass):
         """
         # unpack the arguments
         self.model = []; self.env = []
-        for i in range(kwargs['population']):
+        for _ in range(kwargs['population']):
             self.model.append(model(**hyparams))
-            #self.env.append(env(echelons, SC_params))
+            self.env.append(env(echelons, SC_params))
 
-        #self.model      = model                 # neural network
-        #self.env        = env                   # environment 
         self.args       = kwargs
 
         # store model parameters
@@ -384,7 +382,7 @@ class Parallelized_Simulated_Annealing(OptimClass):
                         iter_debug: bool = False):
         """
         Simulated annealling algorithm
-        Will terminate after a given number of maximum function calls
+        Will terminate after a given number of function calls
 
         - function      =   J_supply_chain function (ssa verion)
         - SC_run_params =   J_supply_chain run parameters

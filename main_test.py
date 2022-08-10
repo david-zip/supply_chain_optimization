@@ -9,10 +9,10 @@ from neural_nets.model_ssa import Net
 from neural_nets.model_reinforce import Net_reinforce
 from environment import Multi_echelon_SupplyChain
 from helper_functions.demand import random_uniform_demand_si, \
-                                seasonal_random_uniform_control_si
+                                    seasonal_random_uniform_control_si
 from helper_functions.trajectory import J_supply_chain_ssa, \
-                                    J_supply_chain_ssa_seasonality, \
-                                    J_supply_chain_reinforce
+                                        J_supply_chain_ssa_seasonality, \
+                                        J_supply_chain_reinforce
 
 from algorithms.sa import Simulated_Annealing, \
                             Parallelized_Simulated_Annealing
@@ -29,6 +29,7 @@ def test_run(args):
     """
     ### INITIALISE PARAMETERS ###
     # define SC parameters (siso - ORIGINAL)
+    
     SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
                     'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
                     'material_cost':{0:12}, 'product_cost':{0:100}}
@@ -37,24 +38,24 @@ def test_run(args):
     SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
                     'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
                     'material_cost':{0:12, 1:13, 2:11}, 'product_cost':{0:100, 1:300}}
-
+    
     SC_params_ = {'echelon_storage_cost':(5/2,10/2,7/2,8/2), 'echelon_storage_cap' :(20,7,10,6),
                     'echelon_prod_cost' :(0,0,0,0), 'echelon_prod_wt' :((5,1),(7,1),(9,1),(11,3)),
                     'material_cost':{0:12}, 'product_cost':{0:100}}
     """
     n_echelons_ = 2
 
-        # state and control actions
-    u_norm_   = np.array([[20/6 for _ in range(n_echelons_ * len(SC_params_['product_cost']))],
-                            [0 for _ in range(n_echelons_ * len(SC_params_['product_cost']))]])
-    x_norm_   = np.array([10 for _ in range(n_echelons_ * len(SC_params_['product_cost']))])
+    # state and control actions
+    u_norm_   = np.array([[20/6 for _ in range(n_echelons_)],
+                            [0 for _ in range(n_echelons_)]])
+    x_norm_   = np.array([10 for _ in range(n_echelons_)])
 
     ### INITIALIZE ENVIRONMENT ###
     SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
     # policy hyperparameters
     hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                    'output_size': n_echelons_ * len(SC_params_['product_cost'])}
+                    'output_size': n_echelons_}
 
     # initialise neural net 
     policy_net = Net(**hyparams_)
@@ -86,7 +87,7 @@ def test_run(args):
 
     PSO_params_ = {}
     PSO_params_['bounds']       = [-5, 5]
-    PSO_params_['weights']      = [0.5, 0.5, 1.0]
+    PSO_params_['weights']      = [0.5, 0.5, 0.9]
     PSO_params_['lambda']       = 0.99
     PSO_params_['population']   = 10
     PSO_params_['maxiter']      = 1000
@@ -164,6 +165,6 @@ if __name__=="__main__":
     - 'cma'         covariance matrix adaptation evolutionary strategy
     - 'de'          differential evolution
     """
-    keynames = ['de']
+    keynames = ['pso']
     
     test_run(keynames)

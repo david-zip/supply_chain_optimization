@@ -71,16 +71,20 @@ def J_supply_chain_ssa(model, SC_run_params, policy):
     model.SC_inventory[:,:] = start_inv             # starting inventory
     # reward
     r_tot   = 0
-    backlog = 0 # no backlog initially
+    backlog = np.zeros(len(model.SC_params['product_cost'])) # no backlog initially
     # first order
     state_norm                     = (model.supply_chain_state()[0,:] - x_norm[0])/x_norm[1]
     state_torch                    = torch.tensor((state_norm))
     order_k                        = policy(state_torch)
     order_k                        = (order_k*u_norm[0] + u_norm[1])[0,0]
+    order_k                        = order_k.reshape((len(model.SC_params['product_cost']), 
+                                                        model.n_echelons))
 
     # === SC run === #
     for step_k in range(steps_tot):
-        d_k_                           = random_uniform_demand_si(demand_lb, demand_ub)
+        d_k_                           = np.array([random_uniform_demand_si(demand_lb, demand_ub) \
+                                            for _ in range(len(model.SC_params['product_cost']))])
+        d_k_                           = d_k_.reshape(len(model.SC_params['product_cost']), 1)
         d_k                            = d_k_ + backlog
         sale_product, r_k, backlog     = model.advance_supply_chain_orders_DE(order_k, d_k)
         r_tot                         += r_k
@@ -89,6 +93,8 @@ def J_supply_chain_ssa(model, SC_run_params, policy):
         state_torch                    = torch.tensor((state_norm))
         order_k                        = policy(state_torch)
         order_k                        = (order_k*u_norm[0] + u_norm[1])[0,0]
+        order_k                        = order_k.reshape((len(model.SC_params['product_cost']), 
+                                                            model.n_echelons))
 
     return r_tot
 
@@ -131,5 +137,6 @@ def J_supply_chain_ssa_seasonality(model, SC_run_params, policy):
         state_torch                    = torch.tensor(np.hstack((state_norm, state_time)))
         order_k                        = policy(state_torch)
         order_k                        = (order_k*u_norm[0] + u_norm[1])[0,0]
-    
+
     return r_tot
+     
