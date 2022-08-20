@@ -32,7 +32,7 @@ def train(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
     else:   # call siso parameters
         # define SC parameters (siso - ORIGINAL)
         SC_params_ = {'echelon_storage_cost':(5/2,10/2,7/2,8/2), 'echelon_storage_cap' :(20,7,10,6),
-                        'echelon_prod_cost' :(0,0,0,0), 'echelon_prod_wt' :((5,1),(7,1),(9,1),(11,3)),
+                        'echelon_prod_cost' :(0,0,0,0), 'echelon_prod_wt' :((5,1),(7,1),(9,1),(11,1)),
                         'material_cost':{0:12}, 'product_cost':{0:100}}
 
     n_echelons_ = echelons
@@ -47,7 +47,7 @@ def train(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
 
     # policy hyperparameters
     hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
-                        'output_size': 2}
+                        'output_size': n_echelons_}
 
     # initialise neural net
     policy_net = Net(**hyparams_)
@@ -140,7 +140,7 @@ def train(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
         for i in range(maxIter):
             print(f"{arg} {i+1}")
             algo_dict[arg].reinitialize()
-            best_policy, best_reward, R_list = algo_dict[arg].func_algorithm(function=J_supply_chain_ssa, 
+            best_policy, best_reward, R_list = algo_dict[arg].func_algorithm(function=J_supply_chain_ssa_seasonality, 
                                                                                 SC_run_params=SC_run_params_, 
                                                                                 func_call_max=maxFunc, 
                                                                             )
@@ -189,6 +189,6 @@ if __name__=="__main__":
     - 'de'          differential evolution
     - 'reinforce'   reinforce
     """
-    keynames = ['pso']
+    keynames = ['sa','psa','psa', 'abc', 'ga', 'ges', 'de']
 
-    train(2000, 30, 'siso', 2, keynames)
+    train(2500, 10, 'siso', 2, keynames)

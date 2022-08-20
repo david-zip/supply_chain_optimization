@@ -12,14 +12,19 @@ from helper_functions.demand import random_uniform_demand_si, seasonal_random_un
 def evaluate(**kwargs):
 
     if kwargs['io'] == "mimo":
+        """
         # define SC parameters (mimo - storage cost, prod_wt - comment)
         SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
                         'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
                         'material_cost':{0:12, 1:13, 2:11}, 'product_cost':{0:100, 1:300}}
+        """
+        SC_params_ = {'echelon_storage_cost':(3,8), 'echelon_storage_cap' :(10,3),
+                        'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
+                        'material_cost':{0:5}, 'product_cost':{0:50}}
     else:   # call siso parameters
         # define SC parameters (siso - ORIGINAL)
-        SC_params_ = {'echelon_storage_cost':(5/2,10/2,7/2,8/2), 'echelon_storage_cap' :(20,7,10,6),
-                        'echelon_prod_cost' :(0,0,0,0), 'echelon_prod_wt' :((5,1),(7,1),(9,1),(11,3)),
+        SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
+                        'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
                         'material_cost':{0:12}, 'product_cost':{0:100}}
 
     n_echelons_ = kwargs["echelons"]
@@ -64,7 +69,7 @@ def evaluate(**kwargs):
     # simulation parameters
     steps_tot  = SC_run_params_['steps_tot'] 
     control_lb = 0; control_ub = 20
-    demand_lb  = 12; demand_ub = 15   
+    demand_lb  = 0; demand_ub = 20   
     SC_model.SC_inventory[:,:] = 10
 
     # lists for statistics
@@ -85,24 +90,26 @@ def evaluate(**kwargs):
     policy_net.load_state_dict(torch.load(kwargs['path']))
 
     # initial order
-    state_norm                     = (SC_model.supply_chain_state()[0,:] - x_norm[0])/x_norm[1]
-    state_torch                    = torch.tensor((state_norm))
+    state_norm                     = (SC_model.supply_chain_state()[0,:-1] - x_norm[0])/x_norm[1]
+    state_time                     = SC_model.supply_chain_state()[0,-1] / 365
+    state_torch                    = torch.tensor(np.hstack((state_norm, state_time)))
     order_k                        = policy_net(state_torch)
     order_k                        = (order_k*u_norm[0] + u_norm[1])[0,0]
 
     backlog = 0
     # main loop
     for step_k in range(steps_tot):
-        d_k_                           = random_uniform_demand_si(demand_lb, demand_ub)
+        d_k_                           = seasonal_random_uniform_control_si(demand_lb, demand_ub, step_k+1)
         demand_history[step_k]         = d_k_
         d_k                            = d_k_ + backlog
-        sale_product, r_k, backlog     = SC_model.advance_supply_chain_orders(order_k, d_k)
+        sale_product, r_k, backlog     = SC_model.advance_supply_chain_orders_DE(order_k, d_k)
         reward_history[step_k]         = r_k
         backlog_history[step_k]        = backlog
         demand_backlog_history[step_k] = d_k
         # agent makes order
-        state_norm                     = (SC_model.supply_chain_state()[0,:] - x_norm[0])/x_norm[1]
-        state_torch                    = torch.tensor((state_norm))
+        state_norm                     = (SC_model.supply_chain_state()[0,:-1] - x_norm[0])/x_norm[1]
+        state_time                     = SC_model.supply_chain_state()[0,-1] / 365
+        state_torch                    = torch.tensor(np.hstack((state_norm, state_time)))
         order_k                        = policy_net(state_torch)
         order_k                        = (order_k*u_norm[0] + u_norm[1])[0,0]
         # reward stats
@@ -154,6 +161,6 @@ if __name__=="__main__":
     keywords = {}
     keywords['io']       = 'siso'
     keywords['echelons'] = 2
-    keywords['path']     = 'neural_nets/parameters/test/pso.pth'
+    keywords['path']     = 'neural_nets/parameters/test/de.pth'
 
     evaluate(**keywords)

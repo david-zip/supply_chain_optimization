@@ -65,7 +65,7 @@ class Gaussian_Evolutionary_Strategy(OptimClass):
         """
         Initialize random starting positions
         """
-        for _ in range(self.population):
+        for i in range(self.population):
 
             # generate random solutions
             new_params = {}
@@ -78,8 +78,8 @@ class Gaussian_Evolutionary_Strategy(OptimClass):
             total_reward = function(self.env, SC_run_params, self.model)
             self.rewards.append(total_reward)
 
-        # find best set of parameters
-        self._find_best()
+            # find best set of parameters
+            self._find_best(i)
     
     def _elite_set(self):
         """

@@ -15,7 +15,8 @@ from helper_functions.trajectory import J_supply_chain_ssa, \
                                         J_supply_chain_reinforce
 
 from algorithms.sa import Simulated_Annealing, \
-                            Parallelized_Simulated_Annealing
+                            Parallelized_Simulated_Annealing, \
+                            Parallelized_Simulated_Annealing_with_Differential_Evolution
 from algorithms.pso import Particle_Swarm_Optimization
 from algorithms.abc import Artificial_Bee_Colony
 from algorithms.ga import Genetic_Algorithm
@@ -85,6 +86,14 @@ def test_run(args):
     PSA_params_['temp']         = [1.0, 0.1]
     PSA_params_['maxiter']      = 1000
 
+    PSADE_params_ = {}
+    PSADE_params_['bounds']        = [-5, 5]
+    PSADE_params_['population']    = 5
+    PSADE_params_['temp']          = [1.0, 0.1]
+    PSADE_params_['scale']         = 0.5
+    PSADE_params_['mutation']      = 0.3
+    PSADE_params_['maxiter']       = 1000
+
     PSO_params_ = {}
     PSO_params_['bounds']       = [-5, 5]
     PSO_params_['weights']      = [0.5, 0.5, 0.9]
@@ -126,19 +135,22 @@ def test_run(args):
     DE_params_['maxiter']       = 1000
 
     algo_dict = {
-        'sa' :  Simulated_Annealing(model=policy_net, env=SC_model, **SA_params_),
-        'psa':  Parallelized_Simulated_Annealing(model=Net, env=Multi_echelon_SupplyChain, echelons=n_echelons_, 
+        'sa'   :  Simulated_Annealing(model=policy_net, env=SC_model, **SA_params_),
+        'psa'  :  Parallelized_Simulated_Annealing(model=Net, env=Multi_echelon_SupplyChain, echelons=n_echelons_, 
                                                     SC_params=SC_params_, hyparams=hyparams_, **PSA_params_),
-        'pso':  Particle_Swarm_Optimization(model=policy_net, env=SC_model, **PSO_params_),
-        'abc':  Artificial_Bee_Colony(model=policy_net, env=SC_model, **ABC_params_),
-        'ga' :  Genetic_Algorithm(model=policy_net, env=SC_model, **GA_params_),
-        'ges':  Gaussian_Evolutionary_Strategy(model=policy_net, env=SC_model, **GES_params_),
-        'cma':  Covariance_Matrix_Adaption_Evolutionary_Strategy(model=policy_net, env=SC_model, **CMA_params_),
-        'de' :  Differential_Evolution(model=policy_net, env=SC_model, **DE_params_)
+        'psade': Parallelized_Simulated_Annealing_with_Differential_Evolution(model=Net, env=Multi_echelon_SupplyChain, 
+                                                                                echelons=n_echelons_, SC_params=SC_params_, 
+                                                                                hyparams=hyparams_, **PSADE_params_),
+        'pso'  :  Particle_Swarm_Optimization(model=policy_net, env=SC_model, **PSO_params_),
+        'abc'  :  Artificial_Bee_Colony(model=policy_net, env=SC_model, **ABC_params_),
+        'ga'   :  Genetic_Algorithm(model=policy_net, env=SC_model, **GA_params_),
+        'ges'  :  Gaussian_Evolutionary_Strategy(model=policy_net, env=SC_model, **GES_params_),
+        'cma'  :  Covariance_Matrix_Adaption_Evolutionary_Strategy(model=policy_net, env=SC_model, **CMA_params_),
+        'de'   :  Differential_Evolution(model=policy_net, env=SC_model, **DE_params_)
     }
 
     for arg in args:
-        best_policy, best_reward, R_list = algo_dict[arg].algorithm(function=J_supply_chain_ssa, 
+        best_policy, best_reward, R_list = algo_dict[arg].algorithm(function=J_supply_chain_ssa_seasonality, 
                                                                         SC_run_params=SC_run_params_, 
                                                                         iter_debug=True)
 
@@ -165,6 +177,6 @@ if __name__=="__main__":
     - 'cma'         covariance matrix adaptation evolutionary strategy
     - 'de'          differential evolution
     """
-    keynames = ['pso']
+    keynames = ['de']
     
     test_run(keynames)

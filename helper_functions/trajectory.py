@@ -4,7 +4,8 @@ J_supply_chain:
 """
 import torch
 import numpy as np
-from helper_functions.demand import random_uniform_demand_si, seasonal_random_uniform_control_si
+from helper_functions.demand import random_uniform_demand_si, \
+                                        seasonal_random_uniform_control_si
 
 def J_supply_chain_reinforce(model, SC_run_params, policy):
     '''
@@ -107,8 +108,9 @@ def J_supply_chain_ssa_seasonality(model, SC_run_params, policy):
     demand_f   = SC_run_params['demand_f']          #seasonal_random_uniform_control_si(lb, ub, tk)
     x_norm     = SC_run_params['x_norm']
 
-    # set initial inventory
+    # set initial inventory and time
     model.SC_inventory[:,:] = start_inv             # starting inventory
+    model.time_k            = 0
     # reward
     r_tot   = 0
     backlog = 0 # no backlog initially
@@ -121,7 +123,7 @@ def J_supply_chain_ssa_seasonality(model, SC_run_params, policy):
 
     # === SC run === #
     for step_k in range(steps_tot):
-        d_k_                           = seasonal_random_uniform_control_si(demand_lb, demand_ub, step_k)
+        d_k_                           = seasonal_random_uniform_control_si(demand_lb, demand_ub, step_k+1)
         d_k                            = d_k_ + backlog
         sale_product, r_k, backlog     = model.advance_supply_chain_orders_DE(order_k, d_k)
         r_tot                         += r_k

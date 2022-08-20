@@ -131,8 +131,8 @@ class Multi_echelon_SupplyChain():
         # reshape inventory
         SC_inventory_ = SC_inventory_.reshape((1,(max_wt+1)*n_echelons), order='F')
         # add time to state
-        #SC_state = np.hstack((SC_inventory_,np.array([[time_k]])))
-        SC_state  = SC_inventory_    
+        SC_state = np.hstack((SC_inventory_,np.array([[time_k]])))
+        #SC_state  = SC_inventory_    
         # return state
         return SC_state
 
@@ -206,6 +206,3 @@ class Multi_echelon_SupplyChain():
         self.product_tot = np.sum(self.SC_inventory)
         # update warehouse values
         self.warehouses   = self.SC_inventory[:,0]
-        
-        for ii in range(self.n_echelons):
-            np.clip(self.warehouses[ii], 0., self.SC_params['echelon_storage_cap'][ii])
