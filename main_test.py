@@ -51,7 +51,7 @@ def test_run(args):
                             [0 for _ in range(n_echelons_)]])
     x_norm_   = np.array([10 for _ in range(n_echelons_)])
 
-    ### INITIALIZE ENVIRONMENT ###
+    ### INITIALIZE ENVIRONMENT ### k
     SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
 
     # policy hyperparameters
@@ -69,7 +69,7 @@ def test_run(args):
     SC_run_params_['demand_lb']  = 12
     SC_run_params_['demand_ub']  = 15
     SC_run_params_['start_inv']  = 10
-    SC_run_params_['demand_f']   = seasonal_random_uniform_control_si(12, 15, 365)
+    SC_run_params_['demand_f']   = random_uniform_demand_si
     SC_run_params_['u_norm']     = u_norm_
     SC_run_params_['x_norm']     = x_norm_
     SC_run_params_['hyparams']   = hyparams_
@@ -85,14 +85,6 @@ def test_run(args):
     PSA_params_['population']   = 5
     PSA_params_['temp']         = [1.0, 0.1]
     PSA_params_['maxiter']      = 1000
-
-    PSADE_params_ = {}
-    PSADE_params_['bounds']        = [-5, 5]
-    PSADE_params_['population']    = 5
-    PSADE_params_['temp']          = [1.0, 0.1]
-    PSADE_params_['scale']         = 0.5
-    PSADE_params_['mutation']      = 0.3
-    PSADE_params_['maxiter']       = 1000
 
     PSO_params_ = {}
     PSO_params_['bounds']       = [-5, 5]
@@ -138,9 +130,6 @@ def test_run(args):
         'sa'   :  Simulated_Annealing(model=policy_net, env=SC_model, **SA_params_),
         'psa'  :  Parallelized_Simulated_Annealing(model=Net, env=Multi_echelon_SupplyChain, echelons=n_echelons_, 
                                                     SC_params=SC_params_, hyparams=hyparams_, **PSA_params_),
-        'psade': Parallelized_Simulated_Annealing_with_Differential_Evolution(model=Net, env=Multi_echelon_SupplyChain, 
-                                                                                echelons=n_echelons_, SC_params=SC_params_, 
-                                                                                hyparams=hyparams_, **PSADE_params_),
         'pso'  :  Particle_Swarm_Optimization(model=policy_net, env=SC_model, **PSO_params_),
         'abc'  :  Artificial_Bee_Colony(model=policy_net, env=SC_model, **ABC_params_),
         'ga'   :  Genetic_Algorithm(model=policy_net, env=SC_model, **GA_params_),
@@ -150,8 +139,8 @@ def test_run(args):
     }
 
     for arg in args:
-        best_policy, best_reward, R_list = algo_dict[arg].algorithm(function=J_supply_chain_ssa_seasonality, 
-                                                                        SC_run_params=SC_run_params_, 
+        best_policy, best_reward, R_list = algo_dict[arg].algorithm(function=SC_model.J_supply_chain,
+                                                                        SC_run_params=SC_run_params_,
                                                                         iter_debug=True)
 
         print(best_reward)
@@ -163,7 +152,7 @@ def test_run(args):
 
         plt.figure()
         plt.plot(R_list)
-        plt.savefig(f'plots/test/training_plots/testfig{arg}.png')
+        plt.savefig(f'outputs/test/training_plots/testfig{arg}.png')
 
 if __name__=="__main__":
     """
@@ -177,6 +166,7 @@ if __name__=="__main__":
     - 'cma'         covariance matrix adaptation evolutionary strategy
     - 'de'          differential evolution
     """
-    keynames = ['de']
-    
+
+    keynames = ['psa']
     test_run(keynames)
+

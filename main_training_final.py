@@ -1,6 +1,7 @@
 """
 Main file to training model using algorithms
 """
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -9,9 +10,6 @@ from neural_nets.model_reinforce import Net_reinforce
 from environment import Multi_echelon_SupplyChain
 from helper_functions.demand import random_uniform_demand_si, \
                                     seasonal_random_uniform_control_si
-from helper_functions.trajectory import J_supply_chain_ssa, \
-                                        J_supply_chain_ssa_seasonality, \
-                                        J_supply_chain_reinforce
 
 from algorithms.sa import Simulated_Annealing, \
                             Parallelized_Simulated_Annealing
@@ -22,7 +20,7 @@ from algorithms.de import Differential_Evolution
 from algorithms.es import Gaussian_Evolutionary_Strategy, \
                             Covariance_Matrix_Adaption_Evolutionary_Strategy
 
-def train_individual(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
+def train_all(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
 
     if io == "mimo":
         # define SC parameters (mimo - storage cost, prod_wt - comment)
@@ -60,7 +58,7 @@ def train_individual(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
     SC_run_params_['demand_lb']  = 12
     SC_run_params_['demand_ub']  = 15
     SC_run_params_['start_inv']  = 10
-    SC_run_params_['demand_f']   = random_uniform_demand_si(12, 15)
+    SC_run_params_['demand_f']   = random_uniform_demand_si
     SC_run_params_['u_norm']     = u_norm_
     SC_run_params_['x_norm']     = x_norm_
     SC_run_params_['hyparams']   = hyparams_
@@ -129,53 +127,118 @@ def train_individual(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
         'de' :  Differential_Evolution(model=policy_net, env=SC_model, **DE_params_)
     }
 
+    colours = {
+        'sa' :  'b',
+        'psa':  'g',
+        'pso':  'r',
+        'abc':  'c',
+        'ga' :  'm',
+        'ges':  'y',
+        'cma':  'w',
+        'de' :  'k'
+    }
+    best = {
+        'sa' :  [],
+        'psa':  [],
+        'pso':  [],
+        'abc':  [],
+        'ga' :  [],
+        'ges':  [],
+        'cma':  [],
+        'de' :  [],
+    }
+    meanls = {
+        'sa' :  [],
+        'psa':  [],
+        'pso':  [],
+        'abc':  [],
+        'ga' :  [],
+        'ges':  [],
+        'cma':  [],
+        'de' :  [],
+    }
+    stdls = {
+        'sa' :  [],
+        'psa':  [],
+        'pso':  [],
+        'abc':  [],
+        'ga' :  [],
+        'ges':  [],
+        'cma':  [],
+        'de' :  [],
+    }
+    low_err = {
+        'sa' :  [],
+        'psa':  [],
+        'pso':  [],
+        'abc':  [],
+        'ga' :  [],
+        'ges':  [],
+        'cma':  [],
+        'de' :  [],
+    }
+    high_err = {
+        'sa' :  [],
+        'psa':  [],
+        'pso':  [],
+        'abc':  [],
+        'ga' :  [],
+        'ges':  [],
+        'cma':  [],
+        'de' :  [],
+    }
+
     for arg in args:
-        # list to strore best rewards found
-        best         = []
-        meanls       = []
-        stdls        = []
-        low_err      = []
-        high_err     = []
-    
         for i in range(maxIter):
             print(f"{arg} {i+1}")
             algo_dict[arg].reinitialize()
-            _, _, R_list = algo_dict[arg].func_algorithm(function=J_supply_chain_ssa_seasonality, 
-                                                            SC_run_params=SC_run_params_, 
-                                                            func_call_max=maxFunc, 
+            _, _, R_list = algo_dict[arg].func_algorithm(function=SC_model.J_supply_chain,
+                                                            SC_run_params=SC_run_params_,
+                                                            func_call_max=maxFunc
                                                         )
-
-            best.append(R_list)
+            best[arg].append(R_list)
 
         for i in range(maxFunc):
             value_list = []
 
             for j in range(maxIter):
-                value_list.append(best[j][i])
-            
-            meanls.append(np.mean(value_list))
-            stdls.append(np.std(value_list))
+                value_list.append(best[arg][j][i])
+
+            meanls[arg].append(np.mean(value_list))
+            stdls[arg].append(np.std(value_list))
 
         for i in range(maxFunc):
-            low_err.append(meanls[i] - stdls[i])
-            high_err.append(meanls[i] + stdls[i])
+            low_err[arg].append(meanls[arg][i] - stdls[arg][i])
+            high_err[arg].append(meanls[arg][i] + stdls[arg][i])
+    
+        # store plotting data in csv for future refernce
+        # store mean values
+        with open(f'outputs/final_results/plot_data/{arg}/mean.csv', mode='w') as meancsv:
+            meancsv_out = csv.writer(meancsv)
+            meancsv_out.writerow(meanls[f'{arg}'])
 
-        # plot graphs
-        _ = plt.figure()
-        plt.suptitle(f"{type(algo_dict[arg]).__name__} for {echelons}-echelon supply chain - {maxIter} Iterations")
-        plt.plot(range(maxFunc), meanls, 'r-', label=f'{type(algo_dict[arg]).__name__}')
-        plt.fill_between(range(maxFunc), high_err, low_err, alpha=0.3, edgecolor='r', facecolor='r')
+        # store std values
+        with open(f'outputs/final_results/plot_data/{arg}/std.csv', mode='w') as stdcsv:
+            stdcsv_out = csv.writer(stdcsv)
+            stdcsv_out.writerow(stdls[f'{arg}'])
 
-        plt.xlabel('Function calls')
-        plt.ylabel('Total reward')
-        plt.yscale('log')
-        plt.ylim((1e3, 1e7))
+    print(f"{arg} training finished")
 
-        plt.legend(loc="upper right")
+    # create plot
+    fig = plt.figure()
+    #plt.suptitle(f"Stochastic seach algorithms for {echelons}-echelon supply chain - {maxIter} Iterations")
+    for arg in args:
+        plt.plot(range(maxFunc), meanls[arg], f'{colours[arg]}-', label=f'{type(algo_dict[arg]).__name__}')
+        plt.fill_between(range(maxFunc), high_err[arg], low_err[arg], alpha=0.3, edgecolor=f'{colours[arg]}', facecolor=f'{colours[arg]}')
 
-        plt.savefig(f'outputs/training_plots/{arg}.png')
+    plt.xlabel('Function calls')
+    plt.ylabel('Total reward')
+    plt.yscale('log')
+    plt.ylim((1e4, 1e7))
 
-        print(f"{arg} training finished")
+    plt.legend(loc="lower right")
+
+    plt.savefig(f'outputs/final_results/plots/main_training_plot.png')
 
 if __name__=="__main__":
     """
@@ -190,6 +253,6 @@ if __name__=="__main__":
     - 'de'          differential evolution
     - 'reinforce'   reinforce
     """
-    keynames = ['sa', 'psa', 'abc', 'ga', 'ges', 'de']
+    keynames = ['sa', 'psa', 'pso', 'abc', 'ga', 'ges', 'de']
 
-    train_individual(500, 5, 'siso', 2, keynames)
+    train_all(1000, 10, 'siso', 2, keynames)

@@ -49,7 +49,7 @@ class Particle_Swarm_Optimization(OptimClass):
         self.population = self.args['population']    
 
         # initalise particle characteristic list
-        self.particle_parameters  = [self.params for _ in range(self.population)]
+        self.particle_parameters  = [copy.deepcopy(self.params) for _ in range(self.population)]
         self.particle_rewards     = []
         self.particle_velocities  = []
 
@@ -58,8 +58,8 @@ class Particle_Swarm_Optimization(OptimClass):
         self.pbest_rewards      = []
 
         # initialise global best
-        self.gbest_parameters   = 0
-        self.gbest_reward       = 0
+        self.gbest_parameters   = copy.deepcopy(self.params)
+        self.gbest_reward       = -1e8
         self.gbest_reward_list  = []
 
         # initialize function call counter and reward list
@@ -97,10 +97,10 @@ class Particle_Swarm_Optimization(OptimClass):
             self.pbest_rewards.append(self.particle_rewards[i])
             self.pbest_parameters.append(copy.deepcopy(self.particle_parameters[i]))
 
-        best_index = np.argmax(self.particle_rewards)
+        best_index = np.argmax(self.pbest_rewards)
         # initialize global best
-        self.gbest_reward       = self.particle_rewards[best_index]
-        self.gbest_parameters   = copy.deepcopy(self.particle_parameters[best_index])
+        self.gbest_reward       = self.pbest_rewards[best_index]
+        self.gbest_parameters   = copy.deepcopy(self.pbest_parameters[best_index])
 
     def _find_best(self, i):
         """
@@ -113,9 +113,9 @@ class Particle_Swarm_Optimization(OptimClass):
             self.pbest_parameters[i] = copy.deepcopy(self.particle_parameters[i])
 
         # determine global best of the current iteration
-        if self.particle_rewards[i] > self.gbest_reward:
-            self.gbest_reward       = self.particle_rewards[i]
-            self.gbest_parameters   = copy.deepcopy(self.particle_parameters[i])
+        if self.pbest_rewards[i] > self.gbest_reward:
+            self.gbest_reward       = self.pbest_rewards[i]
+            self.gbest_parameters   = copy.deepcopy(self.pbest_parameters[i])
 
     def _update(self, function, SC_run_params):
         """
@@ -143,8 +143,7 @@ class Particle_Swarm_Optimization(OptimClass):
                 
             # Calculate particle fitness
             self.model.load_state_dict(self.particle_parameters[i])
-            new_reward = function(self.env, SC_run_params, self.model)
-            self.particle_rewards[i] = new_reward
+            self.particle_rewards[i] = function(self.env, SC_run_params, self.model)
             
             # find best solution
             self._find_best(i)

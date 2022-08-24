@@ -2,6 +2,7 @@
 Simulated annealing for neural net optimization
 """
 import copy
+from operator import index
 import time
 import torch
 import warnings
@@ -55,6 +56,10 @@ class Simulated_Annealing(OptimClass):
         # set max function call for benchmarking
         self.func_call = 0
         self.func_call_reward = []
+
+        # set max time for benchmarking
+        self.time_counter = 0
+        self.time_best_value = {}
 
     def _initialize(self, function, SC_run_params):
         """
@@ -205,9 +210,7 @@ class Parallelized_Simulated_Annealing(OptimClass):
         for _ in range(kwargs['population']):
             self.model.append(model(**hyparams))
             self.env.append(env(echelons, SC_params))
-
         self.args       = kwargs
-
         self.inputs     = [model, env, echelons, SC_params, hyparams, kwargs]
 
         # store model parameters
@@ -423,12 +426,12 @@ class Parallelized_Simulated_Annealing(OptimClass):
 
             # limit number of workers to 5 at a time
             pool = multiprocessing.Pool(5)
-            best_rewards_list = list(pool.map(partial(self._run_parallel_func,
-                                                function=function, SC_run_params=SC_run_params,
-                                                func_call=self.func_call, func_call_max=func_call_max,
-                                                rew_list=self.best_value, param_list=self.best_parameters, 
-                                                iter_debug=iter_debug),
-                                        range(self.population)))
+            _ = list(pool.map(partial(self._run_parallel_func,
+                                        function=function, SC_run_params=SC_run_params,
+                                        func_call=self.func_call, func_call_max=func_call_max,
+                                        rew_list=self.best_value, param_list=self.best_parameters, 
+                                        iter_debug=iter_debug),
+                        range(self.population)))
             pool.terminate()
 
             R_list = []

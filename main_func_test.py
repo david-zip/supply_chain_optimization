@@ -138,9 +138,9 @@ def test_run(args):
     }
 
     for arg in args:
-        best_policy, best_reward, R_list = algo_dict[arg].func_algorithm(function=J_supply_chain_ssa_seasonality, 
+        best_policy, best_reward, R_list = algo_dict[arg].func_algorithm(function=J_supply_chain_ssa, 
                                                                             SC_run_params=SC_run_params_, 
-                                                                            func_call_max=3000, 
+                                                                            func_call_max=5000, 
                                                                             iter_debug=True
                                                                         )
 
@@ -153,7 +153,7 @@ def test_run(args):
 
         plt.figure()
         plt.plot(R_list)
-        plt.savefig(f'plots/test/training_plots/testfig{arg}.png')
+        plt.savefig(f'outputs/test/training_plots/testfig{arg}.png')
 
 if __name__=="__main__":
     """
@@ -167,6 +167,6 @@ if __name__=="__main__":
     - 'cma'         covariance matrix adaptation evolutionary strategy
     - 'de'          differential evolution
     """
-    keynames = ['psa']
+    keynames = ['sa']
     
     test_run(keynames)

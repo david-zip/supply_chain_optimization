@@ -1,0 +1,3 @@
+"""
+Contains main evaluate function
+"""

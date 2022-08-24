@@ -1,5 +1,5 @@
 """
-Simple suppy chain agent
+Heuristic suppy chain agent
 """
 import numpy as np
 

@@ -13,8 +13,3 @@ def timeit(func):
         print(f'Function {func.__name__} took {total_time:.2f} seconds')
         return result
     return timeit_wrapper
-
-def timeend(func):
-    # wraps(func)
-    def timeend_wrapper(*args, **kwargs):
-        pass

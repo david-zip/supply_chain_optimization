@@ -311,4 +311,3 @@ class Artificial_Bee_Colony(OptimClass):
                     print(f'{self.func_call}')
 
         return self.best_parameters, self.best_reward, self.func_call_reward
-

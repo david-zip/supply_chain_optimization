@@ -11,8 +11,7 @@
 - implement differential evolution :)
 - implement NES (optional)
 - add parallelisation to SA :)
+- add time functionality
 
-create a an abstract class
-define an abstract method so they all have the same arguments
-- can store in an array 
-- create a requirements.txt for required packages
+Store solutions in CSV file for reproducibility
+increase the number of iterations of algorithm
