@@ -2,7 +2,9 @@ import copy
 import numpy as np
 import torch
 
-class Multi_echelon_SupplyChain():
+from helper_functions.baseclass import BaseEnv
+
+class Multi_echelon_SupplyChain(BaseEnv):
 
     def __init__(self, n_echelons, SC_params, connectivity_M='none', reward_f='none'):
         """
@@ -141,9 +143,9 @@ class Multi_echelon_SupplyChain():
         self.warehouses   = self.SC_inventory[:,0]
 
     def J_supply_chain(self, model, SC_run_params, policy):
-        '''
+        """
         Original version for stochastic search algorithms with slight modifications
-        '''
+        """
         steps_tot  = SC_run_params['steps_tot']
         u_norm     = SC_run_params['u_norm']   
         _          = SC_run_params['control_lb']

@@ -50,7 +50,7 @@ def evaluate(**kwargs):
     SC_run_params_['demand_lb']  = 12
     SC_run_params_['demand_ub']  = 15
     SC_run_params_['start_inv']  = 10
-    SC_run_params_['demand_f']   = [seasonal_random_uniform_control_si(12, 15, i) for i in range(SC_run_params_['steps_tot'])]
+    SC_run_params_['demand_f']   = random_uniform_demand_si
     SC_run_params_['u_norm']     = u_norm_
     SC_run_params_['x_norm']     = x_norm_
     SC_run_params_['hyparams']   = hyparams_
@@ -99,10 +99,11 @@ def evaluate(**kwargs):
     backlog = 0
     # main loop
     for step_k in range(steps_tot):
-        d_k_                           = seasonal_random_uniform_control_si(demand_lb, demand_ub, step_k+1)
+        df_params                      = [demand_ub, demand_lb, step_k+1]  # set demand function paramters
+        d_k_                           = random_uniform_demand_si(*df_params)
         demand_history[step_k]         = d_k_
         d_k                            = d_k_ + backlog
-        sale_product, r_k, backlog     = SC_model.advance_supply_chain_orders_DE(order_k, d_k)
+        sale_product, r_k, backlog     = SC_model.advance_supply_chain_orders(order_k, d_k)
         reward_history[step_k]         = r_k
         backlog_history[step_k]        = backlog
         demand_backlog_history[step_k] = d_k
@@ -161,6 +162,6 @@ if __name__=="__main__":
     keywords = {}
     keywords['io']       = 'siso'
     keywords['echelons'] = 2
-    keywords['path']     = 'neural_nets/parameters/test/de.pth'
+    keywords['path']     = 'neural_nets/parameters/test/psa.pth'
 
     evaluate(**keywords)

@@ -2,8 +2,6 @@
 Simulated annealing for neural net optimization
 """
 import copy
-from operator import index
-import time
 import torch
 import warnings
 import multiprocessing
@@ -12,6 +10,7 @@ from functools import partial
 
 from algorithms.optim import OptimClass
 from helper_functions.timer import timeit
+from helper_functions.trajectory import J_supply_chain_ssa
 
 class Simulated_Annealing(OptimClass):
 
@@ -278,6 +277,7 @@ class Parallelized_Simulated_Annealing(OptimClass):
         """
         # identify best solution
         if self.current_reward[i] > self.best_value[i]:
+            print(self.current_reward)
             self.best_parameters[i]    = copy.deepcopy(self.parameters[i])
             self.best_value[i]         = self.current_reward[i]
         else:
@@ -326,10 +326,10 @@ class Parallelized_Simulated_Annealing(OptimClass):
         - SC_run_params =   J_supply_chain run parameters
         - iter_debug    =   if true, prints ever 100 iterations
         """
-        function = [function for _ in range(self.population)]
+        functions = [self.env[i].J_supply_chain for i in range(self.population)]
 
         # initialize solutions
-        self._initialize(function, SC_run_params)
+        self._initialize(functions, SC_run_params)
         
         # start algorithm for multiple population
         with multiprocessing.Manager() as manager:
@@ -337,11 +337,12 @@ class Parallelized_Simulated_Annealing(OptimClass):
             # share list between all workers
             self.best_value = manager.list(self.best_value)
             self.best_parameters = manager.list(self.best_parameters)
+            self.current_reward = manager.list(self.current_reward)
             
             # limit number of workers to 5 at a time
             pool = multiprocessing.Pool(5)
             best_rewards_list = list(pool.map(partial(self._run_parallel, \
-                                    function=function, SC_run_params=SC_run_params, \
+                                    function=functions, SC_run_params=SC_run_params, \
                                     rew_list=self.best_value, param_list=self.best_parameters, \
                                     iter_debug=iter_debug),
                                 range(self.population)))
@@ -407,13 +408,13 @@ class Parallelized_Simulated_Annealing(OptimClass):
         - func_call_max =   maximum number of function calls (default: 10000)
         - iter_debug    =   if true, prints ever 1000 function calls
         """
-        function = [function for _ in range(self.population)]
+        functions = [self.env[i].J_supply_chain for i in range(self.population)]
 
         # reinitialize exponential decay
         self.eps = 1 - (self.Tf0/self.Ti0)**(func_call_max**(-1))
 
         # initialize solutions
-        self._initialize(function, SC_run_params)
+        self._initialize(functions, SC_run_params)
 
         # start algorithm for multiple population
         with multiprocessing.Manager() as manager:
@@ -421,13 +422,14 @@ class Parallelized_Simulated_Annealing(OptimClass):
             # share list between all workers
             self.best_value         = manager.list(self.best_value)
             self.best_parameters    = manager.list(self.best_parameters)
+            self.current_reward     = manager.list(self.current_reward)
             self.func_call_reward   = manager.list(self.func_call_reward)
             self.func_call          = manager.list([0 for _ in range(self.population)])
 
             # limit number of workers to 5 at a time
             pool = multiprocessing.Pool(5)
             _ = list(pool.map(partial(self._run_parallel_func,
-                                        function=function, SC_run_params=SC_run_params,
+                                        function=functions, SC_run_params=SC_run_params,
                                         func_call=self.func_call, func_call_max=func_call_max,
                                         rew_list=self.best_value, param_list=self.best_parameters, 
                                         iter_debug=iter_debug),
@@ -630,7 +632,7 @@ class Parallelized_Simulated_Annealing_with_Differential_Evolution(OptimClass):
         - SC_run_params =   J_supply_chain run parameters
         - iter_debug    =   if true, prints ever 100 iterations
         """
-        function = [function for _ in range(self.population)]
+        function = [c for _ in range(self.population)]
 
         # initialize solutions
         self._initialize(function, SC_run_params)

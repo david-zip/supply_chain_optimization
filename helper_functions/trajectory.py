@@ -82,7 +82,8 @@ def J_supply_chain_ssa(model, SC_run_params, policy):
 
     # === SC run === #
     for step_k in range(steps_tot):
-        d_k_                           = random_uniform_demand_si(demand_lb, demand_ub)
+        df_params                      = [demand_ub, demand_lb, step_k+1]  # set demand function paramters
+        d_k_                           = demand_f(*df_params)
         d_k                            = d_k_ + backlog
         sale_product, r_k, backlog     = model.advance_supply_chain_orders(order_k, d_k)
         r_tot                         += r_k
