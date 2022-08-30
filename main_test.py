@@ -78,7 +78,7 @@ def test_run(args):
     SA_params_ = {}
     SA_params_['bounds']        = [-5, 5]
     SA_params_['temp']          = [1.0, 0.1]
-    SA_params_['maxiter']       = 1000
+    SA_params_['maxiter']       = 2000
 
     PSA_params_ = {}
     PSA_params_['bounds']       = [-5, 5]
@@ -124,7 +124,7 @@ def test_run(args):
     DE_params_['population']    = 100
     DE_params_['scale']         = 0.5
     DE_params_['mutation']      = 0.3
-    DE_params_['maxiter']       = 1000
+    DE_params_['maxiter']       = 2000
 
     algo_dict = {
         'sa'   :  Simulated_Annealing(model=policy_net, env=SC_model, **SA_params_),
@@ -167,6 +167,6 @@ if __name__=="__main__":
     - 'de'          differential evolution
     """
 
-    keynames = ['psa']
+    keynames = ['sa', 'de']
     test_run(keynames)
 

@@ -12,7 +12,7 @@ from helper_functions.demand import random_uniform_demand_si, seasonal_random_un
 def evaluate(**kwargs):
 
     if kwargs['io'] == "mimo":
-        """
+        
         # define SC parameters (mimo - storage cost, prod_wt - comment)
         SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
                         'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
@@ -21,6 +21,7 @@ def evaluate(**kwargs):
         SC_params_ = {'echelon_storage_cost':(3,8), 'echelon_storage_cap' :(10,3),
                         'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
                         'material_cost':{0:5}, 'product_cost':{0:50}}
+        """
     else:   # call siso parameters
         # define SC parameters (siso - ORIGINAL)
         SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
@@ -69,7 +70,7 @@ def evaluate(**kwargs):
     # simulation parameters
     steps_tot  = SC_run_params_['steps_tot'] 
     control_lb = 0; control_ub = 20
-    demand_lb  = 0; demand_ub = 20   
+    demand_lb  = 12; demand_ub = 15
     SC_model.SC_inventory[:,:] = 10
 
     # lists for statistics
@@ -162,6 +163,6 @@ if __name__=="__main__":
     keywords = {}
     keywords['io']       = 'siso'
     keywords['echelons'] = 2
-    keywords['path']     = 'neural_nets/parameters/test/psa.pth'
+    keywords['path']     = 'neural_nets/parameters/test/sa.pth'
 
     evaluate(**keywords)

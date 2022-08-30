@@ -2,6 +2,7 @@
 Main file to training model using algorithms
 """
 import csv
+from curses import keyname
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -126,16 +127,27 @@ def train_all(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
         'cma':  Covariance_Matrix_Adaption_Evolutionary_Strategy(model=policy_net, env=SC_model, **CMA_params_),
         'de' :  Differential_Evolution(model=policy_net, env=SC_model, **DE_params_)
     }
-
-    colours = {
-        'sa' :  'b',
-        'psa':  'g',
-        'pso':  'r',
-        'abc':  'c',
-        'ga' :  'm',
-        'ges':  'y',
-        'cma':  'w',
-        'de' :  'k'
+    algo_data = {
+        'name': {
+            'sa' :  'Simulated Annealing',
+            'psa':  'Parallelized Simulated Annealing',
+            'pso':  'Particle Swarm Optimization',
+            'abc':  'Artificial Bee Colony',
+            'ga' :  'Genetic Algorithm',
+            'ges':  'Evolution Strategy',
+            'cma':  'CMA-ES',
+            'de' :  'Differential Evolution'
+        },
+        'colours': {
+            'sa' :  'b',
+            'psa':  'g',
+            'pso':  'r',
+            'abc':  'c',
+            'ga' :  'm',
+            'ges':  'y',
+            'cma':  'w',
+            'de' :  'k'
+        }
     }
     best = {
         'sa' :  [],
@@ -222,14 +234,24 @@ def train_all(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
             stdcsv_out = csv.writer(stdcsv)
             stdcsv_out.writerow(stdls[f'{arg}'])
 
+        # store final values for box plot
+        with open(f'outputs/final_results/plot_data/{arg}/final_solutions.csv', mode='w') as frcsv:
+            frcsv_out = csv.writer(frcsv)
+
+            # list to store values
+            final_value = []
+            for i in range(maxIter):
+                final_value.append(best[f'{arg}'][i][-1])
+            frcsv_out.writerow(final_value)
+
     print(f"{arg} training finished")
 
     # create plot
     fig = plt.figure()
     #plt.suptitle(f"Stochastic seach algorithms for {echelons}-echelon supply chain - {maxIter} Iterations")
     for arg in args:
-        plt.plot(range(maxFunc), meanls[arg], f'{colours[arg]}-', label=f'{type(algo_dict[arg]).__name__}')
-        plt.fill_between(range(maxFunc), high_err[arg], low_err[arg], alpha=0.3, edgecolor=f'{colours[arg]}', facecolor=f'{colours[arg]}')
+        plt.plot(range(maxFunc), meanls[arg], f'{algo_data["colours"][arg]}-', label=f'{algo_data["name"][arg]}')
+        plt.fill_between(range(maxFunc), high_err[arg], low_err[arg], alpha=0.3, edgecolor=f'{algo_data["colours"][arg]}', facecolor=f'{algo_data["colours"][arg]}')
 
     plt.xlabel('Function calls')
     plt.ylabel('Total reward')

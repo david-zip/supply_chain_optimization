@@ -15,7 +15,7 @@ class Multi_echelon_SupplyChain(BaseEnv):
         - SC_params['product_cost']         = {0:100, 1:300}     # for 2 products
         - SC_params['echelon_storage_cost'] = {0:5, 1:10}        # cost of storage for each echelon for 2 echelons
         - SC_params['echelon_storage_cap']  = {0:20, 1:7}        # max storage capacity for each echelon for 2 echelons
-        - SC_params['echelon_prod_wt']      = {0:(5,1), 1:(7,1)} # for 2 echelons gaussian <= look at capped distributions (mean, std)
+        - SC_params['echelon_prod_wt']      = {0:(5,0), 1:(7,0)} # for 2 echelons gaussian <= look at capped distributions (mean, std)
         - SC_params['echelon_prod_cost']    = {0:0, 1:0}         # production cost for each echelon for 2 echelons 1 product
         """
         # SC variable definitions (initial conditions)
@@ -72,7 +72,7 @@ class Multi_echelon_SupplyChain(BaseEnv):
                 shift_plus                       = copy.deepcopy(self.SC_inventory[i_eche, 1:])
                 self.SC_inventory[i_eche, 0:-1] += copy.deepcopy(shift_plus[:])
                 self.SC_inventory[i_eche, 1:]   -= copy.deepcopy(shift_plus[:])
-            
+
             # sale orders - What is leaving the system
             sale_product = orders_called[-1]
             
@@ -86,9 +86,9 @@ class Multi_echelon_SupplyChain(BaseEnv):
             return sale_product, self.reward, backlog
 
     def supply_chain_state(self):
-        '''
+        """
         Returns the supply chain state vector: the inventory (can be added) + time
-        '''
+        """
         # import state variables
         SC_inventory_, n_echelons = copy.deepcopy(self.SC_inventory), self.n_echelons
         time_k, max_wt            = self.time_k, self.max_wt
@@ -103,12 +103,12 @@ class Multi_echelon_SupplyChain(BaseEnv):
         return SC_state
 
     def _supply_chain_reward(self, orders_u, demand):
-        '''
+        """
         reward for multiple raw materials and multiple products
         orders_u:    the orders actually done 'orders_called' which are the control actions.
         inventory_x: notice this is not the state but the inventory.
         demand     : how many sales where asked for.
-        '''
+        """
         demand_penalty = 0; product_gain = 0
         for i in range(len(self.SC_params['product_cost'])):
             demand_penalty += self.SC_params['product_cost'][i] * 0.5           # you loose 50% extra for late product
@@ -116,7 +116,13 @@ class Multi_echelon_SupplyChain(BaseEnv):
         
         raw_mat_cost = 0
         for i in range(len(self.SC_params['material_cost'])):
-            raw_mat_cost += self.SC_params['material_cost'][i]*orders_u[0]      # raw material costs
+            raw_mat_cost   += self.SC_params['material_cost'][i] * orders_u[0]      # raw material costs
+
+        # incur additional cost if above storage cap
+        storage_cap_cost   = 0; storage_cap_exceed = 0
+        for ii in range(self.n_echelons):
+            storage_cap_exceed      = max(0, self.warehouses[ii] - self.SC_params['echelon_storage_cap'][ii])
+            storage_cap_cost       += storage_cap_exceed * (2*self.SC_params['echelon_storage_cost'][ii])
 
         # check if not all demand was met
         demand_diff      = max(0, demand - orders_u[-1])
@@ -126,7 +132,7 @@ class Multi_echelon_SupplyChain(BaseEnv):
                               self.SC_inventory[ii][0] for ii in range(self.n_echelons)])
         
         # calculate reward
-        SC_reward        = product_gain - raw_mat_cost - (demand_diff * demand_penalty) - storage_cost
+        SC_reward        = product_gain - raw_mat_cost - (demand_diff * demand_penalty) - storage_cost - storage_cap_cost
         
         # update reward 
         self.reward    = SC_reward

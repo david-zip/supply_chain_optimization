@@ -277,7 +277,6 @@ class Parallelized_Simulated_Annealing(OptimClass):
         """
         # identify best solution
         if self.current_reward[i] > self.best_value[i]:
-            print(self.current_reward)
             self.best_parameters[i]    = copy.deepcopy(self.parameters[i])
             self.best_value[i]         = self.current_reward[i]
         else:
