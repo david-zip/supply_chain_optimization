@@ -43,7 +43,7 @@ class Artificial_Bee_Colony(OptimClass):
         self.bee_parameters = []
         self.bee_rewards    = []
 
-        self.abandoned      = [0 for i in range(self.population)]   # store number of times solution was not changed
+        self.abandoned      = [0 for _ in range(self.population)]   # store number of times solution was not changed
 
         # initialise global best
         self.best_parameters  = copy.deepcopy(self.params)

@@ -109,42 +109,44 @@ class Multi_echelon_SupplyChain(BaseEnv):
         inventory_x: notice this is not the state but the inventory.
         demand     : how many sales where asked for.
         """
+        # calculate gain from meeting demand
         demand_penalty = 0; product_gain = 0
         for i in range(len(self.SC_params['product_cost'])):
             demand_penalty += self.SC_params['product_cost'][i] * 0.5           # you loose 50% extra for late product
             product_gain   += self.SC_params['product_cost'][i] * orders_u[-1]  # production gains
-        
+
+        # calculate material cost
         raw_mat_cost = 0
         for i in range(len(self.SC_params['material_cost'])):
             raw_mat_cost   += self.SC_params['material_cost'][i] * orders_u[0]      # raw material costs
 
         # incur additional cost if above storage cap
-        storage_cap_cost   = 0; storage_cap_exceed = 0
+        storage_cap_cost   = 0
         for ii in range(self.n_echelons):
             storage_cap_exceed      = max(0, self.warehouses[ii] - self.SC_params['echelon_storage_cap'][ii])
             storage_cap_cost       += storage_cap_exceed * (2*self.SC_params['echelon_storage_cost'][ii])
 
         # check if not all demand was met
         demand_diff      = max(0, demand - orders_u[-1])
-            
+
         # inventory - storage cost
         storage_cost     = sum([self.SC_params['echelon_storage_cost'][ii]*
                               self.SC_inventory[ii][0] for ii in range(self.n_echelons)])
-        
+
         # calculate reward
         SC_reward        = product_gain - raw_mat_cost - (demand_diff * demand_penalty) - storage_cost - storage_cap_cost
-        
+
         # update reward 
         self.reward    = SC_reward
         self.r_product = product_gain
         self.r_raw_mat = raw_mat_cost
         self.r_storage = storage_cost
         self.r_bakclog = demand_diff*demand_penalty
-        
+
         # update storage
         self.storage_tot = sum([self.SC_inventory[ii][0] for ii in range(self.n_echelons)])
         self.product_tot = np.sum(self.SC_inventory)
-        
+
         # update warehouse values
         self.warehouses   = self.SC_inventory[:,0]
 

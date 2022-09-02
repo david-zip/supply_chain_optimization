@@ -30,8 +30,8 @@ def train_all(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
                         'material_cost':{0:12, 1:13, 2:11}, 'product_cost':{0:100, 1:300}}
     else:   # call siso parameters
         # define SC parameters (siso - ORIGINAL)
-        SC_params_ = {'echelon_storage_cost':(5/2,10/2,7/2,8/2), 'echelon_storage_cap' :(20,7,10,6),
-                        'echelon_prod_cost' :(0,0,0,0), 'echelon_prod_wt' :((5,1),(7,1),(9,1),(11,1)),
+        SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7,),
+                        'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
                         'material_cost':{0:12}, 'product_cost':{0:100}}
 
     n_echelons_ = echelons
@@ -80,7 +80,7 @@ def train_all(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
     PSO_params_['bounds']       = [-5, 5]
     PSO_params_['weights']      = [0.5, 0.5, 1.0]
     PSO_params_['lambda']       = 0.99
-    PSO_params_['population']   = 10
+    PSO_params_['population']   = 50
     PSO_params_['maxiter']      = 1000
 
     ABC_params_ = {}
@@ -139,14 +139,14 @@ def train_all(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
             'de' :  'Differential Evolution'
         },
         'colours': {
-            'sa' :  'b',
-            'psa':  'g',
-            'pso':  'r',
-            'abc':  'c',
-            'ga' :  'm',
+            'sa' :  'r',
+            'psa':  'darkorange',
+            'pso':  'black',
+            'abc':  'yellow',
+            'ga' :  'lime',
             'ges':  'y',
-            'cma':  'w',
-            'de' :  'k'
+            'cma':  'aqua',
+            'de' :  'magenta'
         }
     }
     best = {
@@ -218,21 +218,30 @@ def train_all(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
 
             meanls[arg].append(np.mean(value_list))
             stdls[arg].append(np.std(value_list))
-
-        for i in range(maxFunc):
-            low_err[arg].append(meanls[arg][i] - stdls[arg][i])
-            high_err[arg].append(meanls[arg][i] + stdls[arg][i])
+            
+        low_err[arg].append(meanls[arg][i] - stdls[arg][i])
+        high_err[arg].append(meanls[arg][i] + stdls[arg][i])
     
         # store plotting data in csv for future refernce
         # store mean values
         with open(f'outputs/final_results/plot_data/{arg}/mean.csv', mode='w') as meancsv:
             meancsv_out = csv.writer(meancsv)
-            meancsv_out.writerow(meanls[f'{arg}'])
+            meancsv_out.writerow(meanls[arg])
 
         # store std values
         with open(f'outputs/final_results/plot_data/{arg}/std.csv', mode='w') as stdcsv:
             stdcsv_out = csv.writer(stdcsv)
-            stdcsv_out.writerow(stdls[f'{arg}'])
+            stdcsv_out.writerow(stdls[arg])
+        
+        # store highest reward found
+        with open(f'outputs/final_results/plot_data/{arg}/highrange.csv', mode='w') as highcsv:
+            highcsv_out = csv.writer(highcsv)
+            highcsv_out.writerow(high_err[arg])
+
+        # store lowest reward found
+        with open(f'outputs/final_results/plot_data/{arg}/lowrange.csv', mode='w') as lowcsv:
+            lowcsv_out = csv.writer(lowcsv)
+            lowcsv_out.writerow(low_err[arg])
 
         # store final values for box plot
         with open(f'outputs/final_results/plot_data/{arg}/final_solutions.csv', mode='w') as frcsv:
@@ -241,7 +250,7 @@ def train_all(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
             # list to store values
             final_value = []
             for i in range(maxIter):
-                final_value.append(best[f'{arg}'][i][-1])
+                final_value.append(best[arg][i][-1])
             frcsv_out.writerow(final_value)
 
     print(f"{arg} training finished")
@@ -277,4 +286,4 @@ if __name__=="__main__":
     """
     keynames = ['sa', 'psa', 'pso', 'abc', 'ga', 'ges', 'de']
 
-    train_all(1000, 10, 'siso', 2, keynames)
+    train_all(5000, 20, 'siso', 2, keynames)

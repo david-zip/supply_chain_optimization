@@ -1,6 +1,7 @@
 """
 Main file to training model using algorithms
 """
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -60,7 +61,7 @@ def train_individual(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
     SC_run_params_['demand_lb']  = 12
     SC_run_params_['demand_ub']  = 15
     SC_run_params_['start_inv']  = 10
-    SC_run_params_['demand_f']   = random_uniform_demand_si(12, 15)
+    SC_run_params_['demand_f']   = random_uniform_demand_si
     SC_run_params_['u_norm']     = u_norm_
     SC_run_params_['x_norm']     = x_norm_
     SC_run_params_['hyparams']   = hyparams_
@@ -81,7 +82,7 @@ def train_individual(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
     PSO_params_['bounds']       = [-5, 5]
     PSO_params_['weights']      = [0.5, 0.5, 1.0]
     PSO_params_['lambda']       = 0.99
-    PSO_params_['population']   = 10
+    PSO_params_['population']   = 50
     PSO_params_['maxiter']      = 1000
 
     ABC_params_ = {}
@@ -140,7 +141,7 @@ def train_individual(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
         for i in range(maxIter):
             print(f"{arg} {i+1}")
             algo_dict[arg].reinitialize()
-            _, _, R_list = algo_dict[arg].func_algorithm(function=J_supply_chain_ssa_seasonality, 
+            _, _, R_list = algo_dict[arg].func_algorithm(function=SC_model.J_supply_chain, 
                                                             SC_run_params=SC_run_params_, 
                                                             func_call_max=maxFunc, 
                                                         )
@@ -159,6 +160,37 @@ def train_individual(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
         for i in range(maxFunc):
             low_err.append(meanls[i] - stdls[i])
             high_err.append(meanls[i] + stdls[i])
+            
+        # store plotting data in csv for future refernce
+        # store mean values
+        with open(f'outputs/test/plot_data/{arg}/mean.csv', mode='w') as meancsv:
+            meancsv_out = csv.writer(meancsv)
+            meancsv_out.writerow(meanls[f'{arg}'])
+
+        # store std values
+        with open(f'outputs/test/plot_data/{arg}/std.csv', mode='w') as stdcsv:
+            stdcsv_out = csv.writer(stdcsv)
+            stdcsv_out.writerow(stdls[f'{arg}'])
+        
+        # store highest reward found
+        with open(f'outputs/test/plot_data/{arg}/highrange.csv', mode='w') as highcsv:
+            highcsv_out = csv.writer(highcsv)
+            highcsv_out.writerow(high_err[f'{arg}'])
+
+        # store lowest reward found
+        with open(f'outputs/test/plot_data/{arg}/lowrange.csv', mode='w') as lowcsv:
+            lowcsv_out = csv.writer(lowcsv)
+            lowcsv_out.writerow(low_err[f'{arg}'])
+
+        # store final values for box plot
+        with open(f'outputs/test/plot_data/{arg}/final_solutions.csv', mode='w') as frcsv:
+            frcsv_out = csv.writer(frcsv)
+
+            # list to store values
+            final_value = []
+            for i in range(maxIter):
+                final_value.append(best[f'{arg}'][i][-1])
+            frcsv_out.writerow(final_value)
 
         # plot graphs
         _ = plt.figure()
@@ -190,6 +222,6 @@ if __name__=="__main__":
     - 'de'          differential evolution
     - 'reinforce'   reinforce
     """
-    keynames = ['sa', 'psa', 'abc', 'ga', 'ges', 'de']
+    keynames = ['pso']
 
-    train_individual(500, 5, 'siso', 2, keynames)
+    train_individual(5000, 15, 'siso', 2, keynames)
