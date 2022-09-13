@@ -1,17 +1,16 @@
 # What to do?
 
-- condense the main into one file :)
-- refactor training file :)
-- add constraint bounds to pso :)
-- add constraint bounds to abc :)
-- write GA in oop :)
-- add GA to environment :)
-- implement gaussian ES :)
-- implement CMA-ES
-- implement differential evolution :)
-- implement NES (optional)
-- add parallelisation to SA :)
-- add time functionality
-
-Store solutions in CSV file for reproducibility
-increase the number of iterations of algorithm
+- [x] refactor training file
+- [x] add constraint bounds to pso
+- [x] add constraint bounds to abc
+- [x] write GA in oop
+- [x] add GA to environment
+- [x] implement gaussian ES
+- [ ] implement CMA-ES
+- [x] implement differential evolution
+- [ ] implement NES (optional)
+- [x] add parallelisation to SA
+- [x] add time functionality
+- [x] Store solutions in CSV file for reproducibility
+- [x] Refactor main files into helper functions
+- [x] Formalize readme document

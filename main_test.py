@@ -34,16 +34,7 @@ def test_run(args):
     SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
                     'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
                     'material_cost':{0:12}, 'product_cost':{0:100}}
-    """
-    # define SC parameters (mimo - storage cost, prod_wt - comment)
-    SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
-                    'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
-                    'material_cost':{0:12, 1:13, 2:11}, 'product_cost':{0:100, 1:300}}
-    
-    SC_params_ = {'echelon_storage_cost':(5/2,10/2,7/2,8/2), 'echelon_storage_cap' :(20,7,10,6),
-                    'echelon_prod_cost' :(0,0,0,0), 'echelon_prod_wt' :((5,1),(7,1),(9,1),(11,3)),
-                    'material_cost':{0:12}, 'product_cost':{0:100}}
-    """
+
     n_echelons_ = 2
 
     # state and control actions
@@ -74,7 +65,7 @@ def test_run(args):
     SC_run_params_['x_norm']     = x_norm_
     SC_run_params_['hyparams']   = hyparams_
 
-    # definig algo hyperparams
+    # defining algo hyperparams
     SA_params_ = {}
     SA_params_['bounds']        = [-5, 5]
     SA_params_['temp']          = [1.0, 0.1]
@@ -88,10 +79,10 @@ def test_run(args):
 
     PSO_params_ = {}
     PSO_params_['bounds']       = [-5, 5]
-    PSO_params_['weights']      = [0.5, 0.5, 0.9]
+    PSO_params_['weights']      = [0.5, 0.5, 1.0]
     PSO_params_['lambda']       = 0.99
-    PSO_params_['population']   = 10
-    PSO_params_['maxiter']      = 1000
+    PSO_params_['population']   = 50
+    PSO_params_['maxiter']      = 50
 
     ABC_params_ = {}
     ABC_params_['bounds']       = [-5.0, 5.0]
@@ -167,6 +158,10 @@ if __name__=="__main__":
     - 'de'          differential evolution
     """
 
-    keynames = ['sa', 'de']
+    keynames = ['sa', 'psa', 'pso', 'abc', 'ga', 'ges', 'de']
+    #keynames = ['sa', 'psa', 'pso', 'abc']
+    #keynames = ['ga', 'ges', 'de']
+    #keynames = ['sa', 'psa']
+
     test_run(keynames)
 

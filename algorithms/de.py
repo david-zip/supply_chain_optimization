@@ -14,8 +14,6 @@ class Differential_Evolution(OptimClass):
         """
         Initialize algorithm hyper-parameter
 
-        ### ADJUST LATER ###
-
         - model                 =   class       # neural network
         - env                   =   class       # supply chain environment
         - kwargs['bounds']      =   [lb, ub]    # parameter bounds

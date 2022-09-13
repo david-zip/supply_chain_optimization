@@ -29,21 +29,10 @@ def test_run(args):
     """
     ### INITIALISE PARAMETERS ###
     # define SC parameters (siso - ORIGINAL)
-    """
-    SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
-                    'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
-                    'material_cost':{0:12}, 'product_cost':{0:100}}
-    
-    # define SC parameters (mimo - storage cost, prod_wt - comment)
-    SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7),
-                    'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
-                    'material_cost':{0:12, 1:13, 2:11}, 'product_cost':{0:100, 1:300}}
-    """
-    SC_params_ = {'echelon_storage_cost':(5/2,10/2,7/2,8/2), 'echelon_storage_cap' :(20,7,10,6),
-                    'echelon_prod_cost' :(0,0,0,0), 'echelon_prod_wt' :((5,1),(7,1),(9,1),(11,3)),
-                    'material_cost':{0:12}, 'product_cost':{0:100}}
-
-    n_echelons_ = 2
+    SC_params_ = {'echelon_storage_cost':(5/2,10/2,7/2,8/2,6/2), 'echelon_storage_cap' :(20,15,7,7,5),
+                        'echelon_prod_cost' :(0,0,0,0,0), 'echelon_prod_wt' :((5,1),(7,1),(10,1),(4,1),(6,1)),
+                        'material_cost':{0:12}, 'product_cost':{0:100}}
+    n_echelons_ = 5
 
     # state and control actions
     u_norm_   = np.array([[20/6 for _ in range(n_echelons_)],
@@ -140,7 +129,7 @@ def test_run(args):
     for arg in args:
         best_policy, best_reward, R_list = algo_dict[arg].func_algorithm(function=J_supply_chain_ssa, 
                                                                             SC_run_params=SC_run_params_, 
-                                                                            func_call_max=1000, 
+                                                                            func_call_max=5000, 
                                                                             iter_debug=True
                                                                         )
 
@@ -158,6 +147,7 @@ def test_run(args):
 if __name__=="__main__":
     """
     Options:
+    - 'agent        built-in agent
     - 'sa'          simulated annealing
     - 'psa'         parallelized simulated annealing
     - 'pso'         particle swarm optimization
@@ -167,6 +157,7 @@ if __name__=="__main__":
     - 'cma'         covariance matrix adaptation evolutionary strategy
     - 'de'          differential evolution
     """
-    keynames = ['psa']
+    keynames = ['psa', 'pso', 'ges']
+    #keynames = ['ges']
     
     test_run(keynames)

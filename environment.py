@@ -34,10 +34,10 @@ class Multi_echelon_SupplyChain(BaseEnv):
         self.r_bakclog                  = 0                      # how much is the backlog costing me
         
         # constructing supply chain inventory
-        self.wt_list = [SC_params['echelon_prod_wt'][ii][0] for ii in range(n_echelons)]
-        self.wt_std  = [SC_params['echelon_prod_wt'][ii][1] for ii in range(n_echelons)]
-        self.max_wt  = max([self.wt_list[ii] + self.wt_std[ii] for ii in range(n_echelons)])
-        SC_inventory = np.zeros((n_echelons, self.max_wt + 1))   # (echelon, prod_wt + storage)
+        self.wt_list = [SC_params['echelon_prod_wt'][ii][0] for ii in range(self.n_echelons)]
+        self.wt_std  = [SC_params['echelon_prod_wt'][ii][1] for ii in range(self.n_echelons)]
+        self.max_wt  = max([self.wt_list[ii] + self.wt_std[ii] for ii in range(self.n_echelons)])
+        SC_inventory = np.zeros((self.n_echelons, self.max_wt + 1))   # (echelon, prod_wt + storage)
 
         # make inventory self    
         self.SC_inventory = SC_inventory
@@ -140,7 +140,7 @@ class Multi_echelon_SupplyChain(BaseEnv):
         self.reward    = SC_reward
         self.r_product = product_gain
         self.r_raw_mat = raw_mat_cost
-        self.r_storage = storage_cost
+        self.r_storage = storage_cost + storage_cap_cost
         self.r_bakclog = demand_diff*demand_penalty
 
         # update storage

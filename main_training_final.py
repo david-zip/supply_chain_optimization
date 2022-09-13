@@ -30,8 +30,8 @@ def train_all(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
                         'material_cost':{0:12, 1:13, 2:11}, 'product_cost':{0:100, 1:300}}
     else:   # call siso parameters
         # define SC parameters (siso - ORIGINAL)
-        SC_params_ = {'echelon_storage_cost':(5/2,10/2), 'echelon_storage_cap' :(20,7,),
-                        'echelon_prod_cost' :(0,0), 'echelon_prod_wt' :((5,1),(7,1)),
+        SC_params_ = {'echelon_storage_cost':(5/2,10/2,7/2,8/2,6/2), 'echelon_storage_cap' :(20,15,7,7,5),
+                        'echelon_prod_cost' :(0,0,0,0,0), 'echelon_prod_wt' :((5,1),(7,1),(10,1),(4,1),(6,1)),
                         'material_cost':{0:12}, 'product_cost':{0:100}}
 
     n_echelons_ = echelons
@@ -140,13 +140,13 @@ def train_all(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
         },
         'colours': {
             'sa' :  'r',
-            'psa':  'darkorange',
-            'pso':  'black',
-            'abc':  'yellow',
-            'ga' :  'lime',
-            'ges':  'y',
-            'cma':  'aqua',
-            'de' :  'magenta'
+            'psa':  'c',
+            'pso':  'xkcd:purple',
+            'abc':  'y',
+            'ga' :  'g',
+            'ges':  'b',
+            'cma':  'w',
+            'de' :  'k'
         }
     }
     best = {
@@ -219,8 +219,8 @@ def train_all(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
             meanls[arg].append(np.mean(value_list))
             stdls[arg].append(np.std(value_list))
             
-        low_err[arg].append(meanls[arg][i] - stdls[arg][i])
-        high_err[arg].append(meanls[arg][i] + stdls[arg][i])
+            low_err[arg].append(meanls[arg][i] - stdls[arg][i])
+            high_err[arg].append(meanls[arg][i] + stdls[arg][i])
     
         # store plotting data in csv for future refernce
         # store mean values
@@ -253,13 +253,13 @@ def train_all(maxFunc=10000, maxIter=50, io='siso', echelons=2, args=[]):
                 final_value.append(best[arg][i][-1])
             frcsv_out.writerow(final_value)
 
-    print(f"{arg} training finished")
+    print("training finished")
 
     # create plot
     fig = plt.figure()
     #plt.suptitle(f"Stochastic seach algorithms for {echelons}-echelon supply chain - {maxIter} Iterations")
     for arg in args:
-        plt.plot(range(maxFunc), meanls[arg], f'{algo_data["colours"][arg]}-', label=f'{algo_data["name"][arg]}')
+        plt.plot(range(maxFunc), meanls[arg], f'{algo_data["colours"][arg]}', label=f'{algo_data["name"][arg]}')
         plt.fill_between(range(maxFunc), high_err[arg], low_err[arg], alpha=0.3, edgecolor=f'{algo_data["colours"][arg]}', facecolor=f'{algo_data["colours"][arg]}')
 
     plt.xlabel('Function calls')
@@ -284,6 +284,11 @@ if __name__=="__main__":
     - 'de'          differential evolution
     - 'reinforce'   reinforce
     """
-    keynames = ['sa', 'psa', 'pso', 'abc', 'ga', 'ges', 'de']
+    #keynames = ['sa', 'psa', 'pso', 'abc', 'ga', 'ges', 'de']
+    #keynames = ['sa', 'psa', 'pso', 'abc']
+    #keynames = ['ga', 'ges', 'de']
+    #keynames = ['sa', 'psa']
+    keynames = ['psa', 'pso', 'ges']
+    #keynames = ['ges'] 
 
-    train_all(5000, 20, 'siso', 2, keynames)
+    train_all(5000, 20, 'siso', 5, keynames)
