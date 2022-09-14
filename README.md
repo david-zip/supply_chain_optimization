@@ -20,9 +20,6 @@ Supply chain environment consist of single raw material, single product, waiting
 - [x] add parallelisation to SA
 - [x] add time functionality
 - [x] Store solutions in CSV file for reproducibility
-
-### After submission
-
 - [x] Refactor main files into helper functions
 - [x] Formalize readme document
 - [ ] implement REINFORCE
