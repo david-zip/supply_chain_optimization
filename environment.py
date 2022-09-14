@@ -191,3 +191,45 @@ class Multi_echelon_SupplyChain(BaseEnv):
             order_k                        = (order_k*u_norm[0] + u_norm[1])[0,0]
 
         return r_tot
+
+    def run_episode(self, model, SC_run_params, policy):
+        """
+        Original version for stochastic search algorithms with slight modifications
+        """
+        steps_tot  = SC_run_params['steps_tot']
+        u_norm     = SC_run_params['u_norm']   
+        _          = SC_run_params['control_lb']
+        _          = SC_run_params['control_ub']
+        demand_lb  = SC_run_params['demand_lb']
+        demand_ub  = SC_run_params['demand_ub']
+        start_inv  = SC_run_params['start_inv']
+        demand_f   = SC_run_params['demand_f']
+        x_norm     = SC_run_params['x_norm']
+        # set initial inventory and time
+        self.SC_inventory[:,:] = start_inv             # starting inventory
+        self.time_k            = 0
+        # reward
+        r_tot   = 0
+        backlog = 0 # no backlog initially
+        # first order
+        state_norm                     = (self.supply_chain_state()[0,:-1] - x_norm[0])/x_norm[1]
+        state_time                     = self.supply_chain_state()[0,-1] / 365
+        state_torch                    = torch.tensor(np.hstack((state_norm, state_time)))
+        order_k                        = policy(state_torch)
+        order_k                        = (order_k*u_norm[0] + u_norm[1])[0,0]
+
+        # === SC run === #
+        for step_k in range(steps_tot):
+            df_params                      = [demand_ub, demand_lb, step_k+1]  # set demand function paramters
+            d_k_                           = demand_f(*df_params)
+            d_k                            = d_k_ + backlog
+            _, r_k, backlog                = self.advance_supply_chain_orders(order_k, d_k)
+            r_tot                         += r_k
+            # agent makes order
+            state_norm                     = (self.supply_chain_state()[0,:-1] - x_norm[0])/x_norm[1]
+            state_time                     = self.supply_chain_state()[0,-1] / 365
+            state_torch                    = torch.tensor(np.hstack((state_norm, state_time)))
+            order_k                        = policy(state_torch)
+            order_k                        = (order_k*u_norm[0] + u_norm[1])[0,0]
+
+        return r_tot

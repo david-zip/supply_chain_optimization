@@ -1,8 +1,12 @@
 """
-REINFORCE algorithm (NEEDS FIXING)
+REINFORCE algorithm for reinforcement learning
 """
+import copy
 import torch
 import numpy as np
+
+from algorithms.optim import OptimClass
+from helper_functions.timer import timeit
 
 def reinforce(policy_net, rewards, orders, GAMMA, LEARNING_RATE):
     ### REINFORCE ALGORITHM ###
@@ -38,3 +42,58 @@ def reinforce(policy_net, rewards, orders, GAMMA, LEARNING_RATE):
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
+
+class REINFORCE(OptimClass):
+
+    def __init__(self, model, env, **kwargs):
+        """
+        Initialize algorithm hyper-parameters
+
+        - model                  =   class       # neural network
+        - env                    =   class       # supply chain envionment
+        - kwargs['lr']           =   0.01        # learning rate
+        - kwargs['gamma']        =   0.99        # discount factor
+        - kwargs['maxiter']      =   1000        # maximum number of episodes
+        """
+
+        # unpack the arguments
+        self.model      = model                 # neural network
+        self.env        = env                   # environment 
+        self.args       = kwargs
+
+        # store model parameters
+        self.params     = self.model.state_dict()   # inital parameter values
+
+        # maximum iterations/time
+        self.maxiter    = self.args['maxiter']
+
+        # store algorithm hyperparameters
+        self.lr         = kwargs['lr']
+        self.gamma      = kwargs['gamma']
+
+        # initialise list for algorithm
+        self.total_rewards    = []
+        self.logprobs   = []
+
+    def algorithm(self, function, SC_run_params, iter_debug):
+        """
+        REINFORCE algorithm
+
+        - function      =   J_supply_chain function (unsure yet)
+        - SC_run_params =   J_supply_chain run parameters
+        - iter_debug    =   if true, prints ever 100 iterations
+        """
+        return super().algorithm(function, SC_run_params, iter_debug)
+    
+    def reinitialize(self):
+        """
+        Reinitialize class to original state
+        """
+        self.__init__(self.model, self.env, **self.args)
+
+    def func_algorithm(self, function, SC_run_params, func_call_max, iter_debug):
+        """
+        Not needed for REINFORCE
+        """
+        return super().func_algorithm(function, SC_run_params, func_call_max, iter_debug)
+        

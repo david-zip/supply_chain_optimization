@@ -24,7 +24,6 @@ class Simulated_Annealing(OptimClass):
         - kwargs['temp'][0]     =   1.0         # algorithm initial temperature 
         - kwargs['temp'][1]     =   0.1         # algorithm final temperature 
         - kwargs['maxiter']     =   1000        # maximum number of iterations 
-        - kwargs['maxtime']     =   100         # maximum run time in seconds (IMPLEMENT LATER)
         """
         # unpack the arguments
         self.model      = model                 # neural network

@@ -3,10 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-class Net_reinforce(nn.Module):
+class Net_PG(nn.Module):
   # in current form this is a linear function (wouldn't expect great performance here)
   def __init__(self, **kwargs):
-    super(Net_reinforce, self).__init__()
+    super(Net_PG, self).__init__()
 
     # Unpack the dictionary 
     self.args     = kwargs
