@@ -1,5 +1,11 @@
-# What to do?
+# MSc Research Project 
 
+## Overview
+Python code to reinforcement learning for supply chain optimization using stochasitc serach algorithms.
+
+Supply chain environment consist of single raw material, single product, waiting time stochasicity, and echelon flexibility.
+
+## Tasks
 - [x] refactor training file
 - [x] add constraint bounds to PSO
 - [x] add constraint bounds to ABC
@@ -12,5 +18,8 @@
 - [x] add parallelisation to SA
 - [x] add time functionality
 - [x] Store solutions in CSV file for reproducibility
-- [] Refactor main files into helper functions
-- [] Formalize readme document
+
+### After submission
+- [x] Refactor main files into helper functions
+- [x] Formalize readme document
+- [ ] implement REINFORCE 

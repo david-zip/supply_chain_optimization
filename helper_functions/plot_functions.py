@@ -101,7 +101,7 @@ def plot_algorithms(args):
     plt.xticks(np.arange(0, len(meanls[arg])+500, 500))
     plt.ylabel('Reward (£)')
     plt.yscale('log')
-    plt.ylim((1e4, 1e6))
+    #plt.ylim((1e4, 1e6))
 
     plt.legend(loc="lower right")
 
@@ -380,31 +380,3 @@ def plot_orders(args, echelons):
             plt.xlim((0, 365))
 
             plt.savefig(f'outputs/final_results/plots/action_plots/orders_plot/{arg}/orders_{ii+1}.png')
-    
-
-
-if __name__=="__main__":
-    """
-    Options:
-    - 'sa'          simulated annealing
-    - 'psa'         parallelized simulated annealing
-    - 'pso'         particle swarm optimization
-    - 'abc'         artificial bee colony
-    - 'ga'          genetic algorithm
-    - 'ges'         gaussian evolutionary strategy
-    - 'cma'         covariance matrix adaptation evolutionary strategy
-    - 'de'          differential evolution
-    """
-    #keynames = ['sa', 'psa', 'pso', 'abc', 'ga', 'ges', 'de']
-    #keynames = ['sa', 'psa']
-    #keynames = ['pso', 'abc']
-    #keynames = ['ges']
-    #keynames = ['ges']
-    #keynames = ['pso', 'ges']
-    keynames = ['psa', 'pso', 'ges']
-    
-    plot_algorithms(keynames)
-    #boxplot_algorihtms(keynames)
-    #plot_evaluations(keynames, 5)
-    #plot_rewards_stats(keynames)
-    #plot_orders(keynames, 5)
