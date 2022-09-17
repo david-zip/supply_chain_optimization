@@ -6,10 +6,11 @@ Python code to reinforcement learning for supply chain optimization using stocha
 
 Supply chain environment consist of single raw material, single product, waiting time stochasicity, and echelon flexibility.
 
-Environment.py     > Supply chain environment
-/Algorihtms/       > Folder containing all the stochastic search algorithms
-/helper_functions/ > helper functions for demand functions, training, and plotting
-/neural_net/       > neural network and trained parameters
+### Directory
+- Environment.py     > Supply chain environment
+- /Algorihtms/       > Folder containing all the stochastic search algorithms 
+- /helper_functions/ > helper functions for demand functions, training, and plotting 
+- /neural_net/       > neural network and trained parameters 
 
 ## Tasks
 
