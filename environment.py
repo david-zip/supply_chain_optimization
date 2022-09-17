@@ -1,11 +1,8 @@
 import copy
-from turtle import back
 import numpy as np
 import torch
 
-from helper_functions.baseclass import BaseEnv
-
-class Multi_echelon_SupplyChain(BaseEnv):
+class Multi_echelon_SupplyChain():
 
     def __init__(self, n_echelons, SC_params, connectivity_M='none', reward_f='none'):
         """
