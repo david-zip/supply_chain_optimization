@@ -55,7 +55,6 @@ class REINFORCE(OptimClass):
         - kwargs['gamma']        =   0.99        # discount factor
         - kwargs['maxiter']      =   1000        # maximum number of episodes
         """
-
         # unpack the arguments
         self.model      = model                 # neural network
         self.env        = env                   # environment 
@@ -70,20 +69,61 @@ class REINFORCE(OptimClass):
         # store algorithm hyperparameters
         self.lr         = kwargs['lr']
         self.gamma      = kwargs['gamma']
+ 
+        # initialise random parameteres
+        for key, value in self.params.items():
+            self.params[key] = torch.rand(value.shape) * (5 - (-5)) + (-5)
+        self.model.load_state_dict(self.params)
+
+        # define optimizer
+        self.optimizer  = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
         # initialise list for algorithm
         self.total_rewards    = []
-        self.logprobs   = []
 
     def algorithm(self, function, SC_run_params, iter_debug):
         """
-        REINFORCE algorithm
 
         - function      =   J_supply_chain function (unsure yet)
         - SC_run_params =   J_supply_chain run parameters
         - iter_debug    =   if true, prints ever 100 iterations
         """
-        return super().algorithm(function, SC_run_params, iter_debug)
+        mean_score = []
+        for i in range(self.maxiter):
+            rewards = []
+            logprobs = []    
+            discounted_rewards = []
+            backlog = 0
+
+            self.env.time_k = 0
+            for _ in range(SC_run_params['steps_tot']):
+                r_k, logprob, backlog = function(self.env, SC_run_params, self.model, backlog)
+
+                r_k = torch.tensor(r_k, requires_grad=True)
+                logprob = torch.tensor(logprob, requires_grad=True)
+                rewards.append(r_k)
+                logprobs.append(logprob)
+            
+            self.total_rewards.append(sum(rewards).detach().numpy())
+            print(self.total_rewards[i])
+
+            for t, reward in enumerate(rewards):
+                discounted_rewards.append(self.gamma**(t+1) * reward)
+            
+            loss = []
+            for j in range(len(logprobs)):
+                loss.append(-logprobs[j] * discounted_rewards[j])
+            loss = torch.stack(loss).sum()
+
+            mean_score.append(sum(self.total_rewards)/(i+1))
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            print(f"episode {i}")
+        
+        return self.total_rewards, mean_score
     
     def reinitialize(self):
         """

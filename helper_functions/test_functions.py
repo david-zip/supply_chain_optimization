@@ -1,6 +1,12 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+from algorithms.reinforce import REINFORCE
+
+#####----FOR REINFORCE TEST----#####
+from helper_functions.demand import random_uniform_demand_si
+from neural_nets.model_reinforce import Net_PG
+#####----FOR REINFORCE TEST----#####
 
 from neural_nets.model_ssa import Net
 from environment import Multi_echelon_SupplyChain
@@ -275,3 +281,55 @@ def test_run_function_calls(args, demand):
         plt.figure()
         plt.plot(R_list)
         plt.savefig(f'outputs/test/training_plots/testfig{arg}.png')
+
+def test_reinforce():
+    """
+    ONLY FOR TESTING REINFORCE
+    """
+    ### INITIALISE PARAMETERS ###
+    # define SC parameters (siso - ORIGINAL)
+    SC_params_ = {'echelon_storage_cost':(5/2,10/2,7/2,8/2,6/2), 'echelon_storage_cap' :(20,15,7,7,5),
+                        'echelon_prod_cost' :(0,0,0,0,0), 'echelon_prod_wt' :((5,1),(7,1),(10,1),(4,1),(6,1)),
+                        'material_cost':{0:12}, 'product_cost':{0:100}}
+    n_echelons_ = 2
+
+    # state and control actions
+    u_norm_   = np.array([[20/6 for _ in range(n_echelons_)],
+                            [0 for _ in range(n_echelons_)]])
+    x_norm_   = np.array([10 for _ in range(n_echelons_)])
+
+    ### INITIALIZE ENVIRONMENT ###
+    SC_model = Multi_echelon_SupplyChain(n_echelons=n_echelons_, SC_params=SC_params_)
+
+    # policy hyperparameters
+    hyparams_ = {'input_size': SC_model.supply_chain_state()[0,:].shape[0], 
+                    'output_size': n_echelons_}
+
+    # initialise neural net 
+    policy_net = Net_PG(**hyparams_)
+
+    # run parameters
+    SC_run_params_ = {}
+    SC_run_params_['steps_tot']  = 365
+    SC_run_params_['control_lb'] = 0
+    SC_run_params_['control_ub'] = 20
+    SC_run_params_['demand_lb']  = 12
+    SC_run_params_['demand_ub']  = 15
+    SC_run_params_['start_inv']  = 10
+    SC_run_params_['demand_f']   = random_uniform_demand_si
+    SC_run_params_['u_norm']     = u_norm_
+    SC_run_params_['x_norm']     = x_norm_
+    SC_run_params_['hyparams']   = hyparams_
+
+    R_params_ = {}
+    R_params_['lr']           =   0.01        # learning rate
+    R_params_['gamma']        =   0.99        # discount factor
+    R_params_['maxiter']      =   5000        # maximum number of episodes
+
+    test_algo = REINFORCE(policy_net, SC_model, **R_params_)
+
+    total_rewards, mean_score = test_algo.algorithm(function=SC_model.run_episode, SC_run_params=SC_run_params_, iter_debug=False)
+
+    plt.plot(total_rewards)
+    plt.plot(mean_score)
+    plt.show()

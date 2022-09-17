@@ -1,4 +1,5 @@
 import copy
+from turtle import back
 import numpy as np
 import torch
 
@@ -153,6 +154,8 @@ class Multi_echelon_SupplyChain(BaseEnv):
     def J_supply_chain(self, model, SC_run_params, policy):
         """
         Original version for stochastic search algorithms with slight modifications
+
+        Runs a full trajectory in the environment 
         """
         steps_tot  = SC_run_params['steps_tot']
         u_norm     = SC_run_params['u_norm']   
@@ -192,9 +195,9 @@ class Multi_echelon_SupplyChain(BaseEnv):
 
         return r_tot
 
-    def run_episode(self, model, SC_run_params, policy):
+    def run_episode(self, model, SC_run_params, policy, backlog):
         """
-        Original version for stochastic search algorithms with slight modifications
+        Test function for policy gradient algorihtms
         """
         steps_tot  = SC_run_params['steps_tot']
         u_norm     = SC_run_params['u_norm']   
@@ -205,31 +208,37 @@ class Multi_echelon_SupplyChain(BaseEnv):
         start_inv  = SC_run_params['start_inv']
         demand_f   = SC_run_params['demand_f']
         x_norm     = SC_run_params['x_norm']
-        # set initial inventory and time
-        self.SC_inventory[:,:] = start_inv             # starting inventory
-        self.time_k            = 0
-        # reward
-        r_tot   = 0
-        backlog = 0 # no backlog initially
-        # first order
+
+        # initialize environemnt
+        if self.time_k == 0:
+            self.SC_inventory[:,:] = start_inv             # starting inventory
+            self.time_k            = 0
+            backlog                = 0
+
+        orders = np.array([0 for _ in range(self.n_echelons)])
+
         state_norm                     = (self.supply_chain_state()[0,:-1] - x_norm[0])/x_norm[1]
         state_time                     = self.supply_chain_state()[0,-1] / 365
         state_torch                    = torch.tensor(np.hstack((state_norm, state_time)))
         order_k                        = policy(state_torch)
-        order_k                        = (order_k*u_norm[0] + u_norm[1])[0,0]
+        orders                         = ((order_k*20).detach().numpy())[0,0]
+        
+        # CATEGORICAL TEST
+        prob = order_k.detach().numpy()
 
-        # === SC run === #
-        for step_k in range(steps_tot):
-            df_params                      = [demand_ub, demand_lb, step_k+1]  # set demand function paramters
-            d_k_                           = demand_f(*df_params)
-            d_k                            = d_k_ + backlog
-            _, r_k, backlog                = self.advance_supply_chain_orders(order_k, d_k)
-            r_tot                         += r_k
-            # agent makes order
-            state_norm                     = (self.supply_chain_state()[0,:-1] - x_norm[0])/x_norm[1]
-            state_time                     = self.supply_chain_state()[0,-1] / 365
-            state_torch                    = torch.tensor(np.hstack((state_norm, state_time)))
-            order_k                        = policy(state_torch)
-            order_k                        = (order_k*u_norm[0] + u_norm[1])[0,0]
+        #for i in range(0, self.n_echelons * 20, 20):
+        #    m = torch.distributions.Categorical(order_k[0][0][(0 + i):(20 + i)])
+        #    action = m.sample()
+        #    orders[i//20] = action.item()
+        #    prob.append(m.log_prob(action))
 
-        return r_tot
+        logprob = 0
+        for i in range(len(prob)):
+            logprob += np.log(prob[i])
+
+        df_params                      = [demand_ub, demand_lb, self.time_k+1]  # set demand function paramters
+        d_k_                           = demand_f(*df_params)
+        d_k                            = d_k_ + backlog
+        _, r_k, backlog                = self.advance_supply_chain_orders(orders, d_k)
+
+        return r_k, logprob, backlog
